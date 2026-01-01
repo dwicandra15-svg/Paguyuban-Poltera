@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paguyuban Simpan Pinjam</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9}
+header{background:#0d6efd;color:#fff;padding:15px;display:flex;gap:15px;align-items:center}
+header img{width:50px;height:50px;border-radius:10px;background:#fff;object-fit:cover}
+.container{padding:15px}
+.card{background:#fff;padding:15px;border-radius:12px;margin-bottom:15px}
+.menu-item{display:flex;gap:15px;align-items:center;padding:15px;border-bottom:1px solid #eee;cursor:pointer}
+.menu-item:last-child{border:none}
+.menu-icon{font-size:26px}
+.menu-text{font-size:16px;font-weight:bold}
+.hidden{display:none}
+
+input,select,button{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  box-sizing:border-box;
+}
+button{
+  background:#0d6efd;
+  color:#fff;
+  border:none;
+  cursor:pointer
+}
+button:hover{background:#0b5ed7}
+
+.btn-small{
+  padding:6px 12px;
+  font-size:12px;
+  width:auto;
+  display:inline-block;
+  margin:2px;
+}
+.btn-edit{background:#ffc107;color:#000}
+.btn-edit:hover{background:#e0a800}
+.btn-delete{background:#dc3545}
+.btn-delete:hover{background:#c82333}
+
+.table-wrap{overflow-x:auto;margin-top:12px}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:10px;
+  overflow:hidden
+}
+thead{background:#0d6efd;color:#fff}
+th,td{
+  padding:10px 8px;
+  font-size:13px;
+  text-align:center;
+  border-bottom:1px solid #eee
+}
+tbody tr:nth-child(even){background:#f9f9f9}
+
+.badge{
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:11px;
+  color:#fff
+}
+.badge-wait{background:#ffc107;color:#000}
+.badge-ok{background:#28a745}
+
+.watermark{
+  text-align:center;
+  font-size:12px;
+  color:#888;
+  padding:20px
+}
+
+.action-buttons{
+  display:flex;
+  gap:5px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img id="logoApp">
+  <div>
+    <h3 id="appTitle">Paguyuban Simpan Pinjam</h3>
+    <small id="appSub">Tanpa Bunga • Kekeluargaan</small>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- MENU -->
+<div id="menu" class="card">
+  <div class="menu-item" onclick="openPage('dashboard')"><div class="menu-icon">📊</div><div class="menu-text">Dashboard</div></div>
+  <div class="menu-item" onclick="openPage('anggota')"><div class="menu-icon">👥</div><div class="menu-text">Anggota</div></div>
+  <div class="menu-item" onclick="openPage('pengajuan')"><div class="menu-icon">📝</div><div class="menu-text">Rencana Pengajuan</div></div>
+  <div class="menu-item" onclick="openPage('pencairan')"><div class="menu-icon">💰</div><div class="menu-text">Pencairan Pinjaman</div></div>
+  <div class="menu-item" onclick="openPage('angsuran')"><div class="menu-icon">🔁</div><div class="menu-text">Pembayaran Angsuran</div></div>
+  <div class="menu-item" onclick="openPage('iuran')"><div class="menu-icon">💳</div><div class="menu-text">Iuran Rutin</div></div>
+  <div class="menu-item" onclick="openPage('laporan')"><div class="menu-icon">📑</div><div class="menu-text">Laporan</div></div>
+  <div class="menu-item" onclick="openPage('setting')"><div class="menu-icon">⚙️</div><div class="menu-text">Pengaturan</div></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="card hidden">
+  <h3>📊 Dashboard</h3>
+  <p>Saldo Kas: <b id="dKas"></b></p>
+  <p>Total Piutang: <b id="dPiutang"></b></p>
+  <p>Jumlah Anggota: <b id="dAnggota"></b></p>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- ANGGOTA -->
+<div id="anggota" class="card hidden">
+  <h3>👥 Anggota</h3>
+  <input id="anggotaNama" placeholder="Nama Anggota">
+  <input type="date" id="anggotaMasuk">
+  <input type="hidden" id="anggotaEditIndex" value="">
+  <button onclick="simpanAnggota()">Simpan Anggota</button>
+  <div id="listAnggota"></div>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- PENGAJUAN -->
+<div id="pengajuan" class="card hidden">
+  <h3>📝 Rencana Pengajuan</h3>
+  <select id="pjAnggota"></select>
+  <input type="number" id="pjNominal" placeholder="Nominal Pinjaman">
+  <select id="pjLama">
+    <option value="">Tenor (bulan)</option>
+    <script>for(let i=1;i<=12;i++)document.write(`<option>${i}</option>`)</script>
+  </select>
+  <input type="hidden" id="pjEditId" value="">
+  <button onclick="simpanPengajuan()">Simpan Pengajuan</button>
+  <div id="listPengajuan"></div>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- PENCAIRAN -->
+<div id="pencairan" class="card hidden">
+  <h3>💰 Pencairan Pinjaman</h3>
+  <div id="listCair"></div>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- ANGSURAN -->
+<div id="angsuran" class="card hidden">
+  <h3>🔁 Pembayaran Angsuran</h3>
+  <select id="angAnggota" onchange="updateSisa()"></select>
+  <input type="number" id="angNominal" placeholder="Nominal Bayar" oninput="updateSisa()">
+  <input id="angSisa" readonly placeholder="Sisa Pinjaman">
+  <select id="angKe">
+    <option value="">Angsuran ke-</option>
+    <script>for(let i=1;i<=12;i++)document.write(`<option>${i}</option>`)</script>
+  </select>
+  <input type="hidden" id="angEditIndex" value="">
+  <button onclick="simpanAngsuran()">Simpan Angsuran</button>
+  <div id="listAngsuran"></div>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- IURAN -->
+<div id="iuran" class="card hidden">
+  <h3>💳 Iuran Rutin</h3>
+  <select id="iuranAnggota"></select>
+  <input type="number" id="iuranNominal" placeholder="Nominal Iuran">
+  <input type="month" id="iuranBulan">
+  <input type="hidden" id="iuranEditIndex" value="">
+  <button onclick="simpanIuran()">Simpan Iuran</button>
+  <div id="listIuran"></div>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- LAPORAN -->
+<div id="laporan" class="card hidden">
+  <h3>📑 Laporan</h3>
+  <button onclick="downloadPDF()">Download PDF</button>
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+<!-- SETTING -->
+<div id="setting" class="card hidden">
+  <h3>⚙️ Pengaturan</h3>
+  <input id="setTitle" placeholder="Judul">
+  <input id="setSub" placeholder="Subjudul">
+  <input type="file" onchange="setLogo(this)">
+  <button onclick="simpanSetting()">Simpan</button>
+  <button onclick="backupData()">Backup Data</button>
+  <input type="file" onchange="restoreData(this)">
+  <button onclick="backMenu()">Kembali</button>
+</div>
+
+</div>
+
+<div class="watermark">Created & Developed by D.D Candra</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ===== DATA & LOGIC ===== */
+const get=(k,d=[])=>JSON.parse(localStorage.getItem(k))||d;
+const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+let anggota=get("anggota"),
+pengajuan=get("pengajuan"),
+pinjaman=get("pinjaman"),
+angsuran=get("angsuran"),
+iuran=get("iuran"),
+kas=get("kas"),
+setting=get("setting",{});
+
+function openPage(id){
+  menu.classList.add("hidden");
+  document.querySelectorAll(".card").forEach(c=>c.id!=="menu"&&c.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  resetForms();
+  renderAll();
+}
+function backMenu(){
+  document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"));
+  menu.classList.remove("hidden");
+  resetForms();
+}
+
+function resetForms(){
+  anggotaNama.value="";
+  anggotaMasuk.value="";
+  anggotaEditIndex.value="";
+  pjNominal.value="";
+  pjLama.value="";
+  pjEditId.value="";
+  angNominal.value="";
+  angSisa.value="";
+  angKe.value="";
+  angEditIndex.value="";
+  iuranNominal.value="";
+  iuranBulan.value="";
+  iuranEditIndex.value="";
+}
+
+/* ===== ANGGOTA ===== */
+function simpanAnggota(){
+  const idx = anggotaEditIndex.value;
+  if(idx !== ""){
+    anggota[idx] = {nama:anggotaNama.value, masuk:anggotaMasuk.value};
+  } else {
+    anggota.push({nama:anggotaNama.value, masuk:anggotaMasuk.value});
+  }
+  set("anggota",anggota);
+  resetForms();
+  renderAll();
+}
+
+function editAnggota(idx){
+  anggotaNama.value = anggota[idx].nama;
+  anggotaMasuk.value = anggota[idx].masuk;
+  anggotaEditIndex.value = idx;
+  window.scrollTo(0,0);
+}
+
+function deleteAnggota(idx){
+  if(confirm(`Hapus anggota ${anggota[idx].nama}?`)){
+    anggota.splice(idx, 1);
+    set("anggota",anggota);
+    renderAll();
+  }
+}
+
+/* ===== PENGAJUAN ===== */
+function simpanPengajuan(){
+  const editId = pjEditId.value;
+  if(editId !== ""){
+    const p = pengajuan.find(x=>x.id == editId);
+    p.anggota = pjAnggota.value;
+    p.nominal = +pjNominal.value;
+    p.lama = +pjLama.value;
+  } else {
+    pengajuan.push({
+      id:Date.now(),
+      anggota:pjAnggota.value,
+      nominal:+pjNominal.value,
+      lama:+pjLama.value,
+      status:"MENUNGGU"
+    });
+  }
+  set("pengajuan",pengajuan);
+  resetForms();
+  renderAll();
+}
+
+function editPengajuan(id){
+  const p = pengajuan.find(x=>x.id === id);
+  pjAnggota.value = p.anggota;
+  pjNominal.value = p.nominal;
+  pjLama.value = p.lama;
+  pjEditId.value = id;
+  window.scrollTo(0,0);
+}
+
+function deletePengajuan(id){
+  if(confirm('Hapus pengajuan ini?')){
+    pengajuan = pengajuan.filter(x=>x.id !== id);
+    set("pengajuan",pengajuan);
+    renderAll();
+  }
+}
+
+function cairkan(id){
+  const p=pengajuan.find(x=>x.id===id);
+  pinjaman.push({anggota:p.anggota,nominal:p.nominal,lama:p.lama,angsuran:p.nominal/p.lama,sisa:p.nominal});
+  kas.push({jenis:"KREDIT",nominal:p.nominal});
+  p.status="CAIR";
+  set("pinjaman",pinjaman);set("kas",kas);set("pengajuan",pengajuan);
+  renderAll();
+}
+
+/* ===== ANGSURAN ===== */
+function updateSisa(){
+  const p=pinjaman.find(x=>x.anggota===angAnggota.value&&x.sisa>0);
+  angSisa.value=p?(p.sisa-(+angNominal.value||0)):"";
+}
+
+function simpanAngsuran(){
+  const idx = angEditIndex.value;
+  
+  if(idx !== ""){
+    // Edit mode
+    const oldData = angsuran[idx];
+    const oldNominal = oldData.nominal;
+    const newNominal = +angNominal.value;
+    
+    // Update angsuran record
+    angsuran[idx] = {
+      anggota: angAnggota.value,
+      nominal: newNominal,
+      ke: angKe.value
+    };
+    
+    // Update pinjaman sisa
+    const p = pinjaman.find(x=>x.anggota===angAnggota.value);
+    if(p){
+      p.sisa = p.sisa + oldNominal - newNominal;
+    }
+    
+    // Update kas (remove old, add new)
+    const kasIdx = kas.findIndex(k=>k.jenis==="DEBET" && k.nominal===oldNominal);
+    if(kasIdx !== -1){
+      kas[kasIdx].nominal = newNominal;
+    }
+    
+  } else {
+    // Add new
+    const p=pinjaman.find(x=>x.anggota===angAnggota.value&&x.sisa>0);
+    if(!p){
+      alert("Tidak ada pinjaman aktif untuk anggota ini");
+      return;
+    }
+    p.sisa-=+angNominal.value;
+    angsuran.push({anggota:angAnggota.value, nominal:+angNominal.value, ke:angKe.value});
+    kas.push({jenis:"DEBET",nominal:+angNominal.value});
+  }
+  
+  set("pinjaman",pinjaman);
+  set("angsuran",angsuran);
+  set("kas",kas);
+  resetForms();
+  renderAll();
+}
+
+function editAngsuran(idx){
+  const a = angsuran[idx];
+  angAnggota.value = a.anggota;
+  angNominal.value = a.nominal;
+  angKe.value = a.ke;
+  angEditIndex.value = idx;
+  updateSisa();
+  window.scrollTo(0,0);
+}
+
+function deleteAngsuran(idx){
+  if(confirm('Hapus data angsuran ini?')){
+    const a = angsuran[idx];
+    
+    // Return nominal to pinjaman
+    const p = pinjaman.find(x=>x.anggota===a.anggota);
+    if(p){
+      p.sisa += a.nominal;
+    }
+    
+    // Remove from kas
+    const kasIdx = kas.findIndex(k=>k.jenis==="DEBET" && k.nominal===a.nominal);
+    if(kasIdx !== -1){
+      kas.splice(kasIdx, 1);
+    }
+    
+    angsuran.splice(idx, 1);
+    set("pinjaman",pinjaman);
+    set("angsuran",angsuran);
+    set("kas",kas);
+    renderAll();
+  }
+}
+
+/* ===== IURAN ===== */
+function simpanIuran(){
+  const idx = iuranEditIndex.value;
+  
+  if(idx !== ""){
+    // Edit mode
+    const oldData = iuran[idx];
+    const oldNominal = oldData.nominal;
+    const newNominal = +iuranNominal.value;
+    
+    iuran[idx] = {
+      anggota: iuranAnggota.value,
+      nominal: newNominal,
+      bulan: iuranBulan.value
+    };
+    
+    // Update kas
+    const kasIdx = kas.findIndex(k=>k.jenis==="DEBET" && k.nominal===oldNominal);
+    if(kasIdx !== -1){
+      kas[kasIdx].nominal = newNominal;
+    }
+    
+  } else {
+    // Add new
+    iuran.push({
+      anggota:iuranAnggota.value,
+      nominal:+iuranNominal.value,
+      bulan:iuranBulan.value
+    });
+    kas.push({jenis:"DEBET",nominal:+iuranNominal.value});
+  }
+  
+  set("iuran",iuran);
+  set("kas",kas);
+  resetForms();
+  renderAll();
+}
+
+function editIuran(idx){
+  const i = iuran[idx];
+  iuranAnggota.value = i.anggota;
+  iuranNominal.value = i.nominal;
+  iuranBulan.value = i.bulan;
+  iuranEditIndex.value = idx;
+  window.scrollTo(0,0);
+}
+
+function deleteIuran(idx){
+  if(confirm('Hapus data iuran ini?')){
+    const i = iuran[idx];
+    
+    // Remove from kas
+    const kasIdx = kas.findIndex(k=>k.jenis==="DEBET" && k.nominal===i.nominal);
+    if(kasIdx !== -1){
+      kas.splice(kasIdx, 1);
+    }
+    
+    iuran.splice(idx, 1);
+    set("iuran",iuran);
+    set("kas",kas);
+    renderAll();
+  }
+}
+
+/* ===== PDF ===== */
+function downloadPDF(){
+  const {jsPDF}=window.jspdf;
+  const d=new jsPDF();
+  d.text(appTitle.innerText,105,15,{align:"center"});
+  d.text(appSub.innerText,105,22,{align:"center"});
+  let y=35;
+  pinjaman.forEach(p=>{d.text(`${p.anggota} | Sisa ${p.sisa}`,20,y);y+=7});
+  d.text("Created & Developed by D.D Candra",105,285,{align:"center"});
+  d.save("laporan_paguyuban.pdf");
+}
+
+/* ===== SETTING ===== */
+function simpanSetting(){
+  setting.title=setTitle.value;
+  setting.sub=setSub.value;
+  set("setting",setting);
+  loadSetting();
+}
+function setLogo(f){
+  const r=new FileReader();
+  r.onload=()=>{setting.logo=r.result;set("setting",setting);loadSetting()};
+  r.readAsDataURL(f.files[0]);
+}
+function backupData(){
+  const blob=new Blob([JSON.stringify(localStorage)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="backup_paguyuban.json";
+  a.click();
+}
+function restoreData(f){
+  const r=new FileReader();
+  r.onload=()=>{const d=JSON.parse(r.result);Object.keys(d).forEach(k=>localStorage.setItem(k,d[k]));location.reload()};
+  r.readAsText(f.files[0]);
+}
+
+/* ===== RENDER ===== */
+function renderAll(){
+  dKas.innerText='Rp '+kas.reduce((a,b)=>a+(b.jenis==="DEBET"?b.nominal:-b.nominal),0).toLocaleString();
+  dPiutang.innerText='Rp '+pinjaman.reduce((a,b)=>a+b.sisa,0).toLocaleString();
+  dAnggota.innerText=anggota.length;
+
+  pjAnggota.innerHTML=angAnggota.innerHTML=iuranAnggota.innerHTML=
+    '<option value="">Pilih Anggota</option>'+anggota.map(a=>`<option>${a.nama}</option>`).join("");
+
+  listAnggota.innerHTML=anggota.map((a,idx)=>{
+    const ti=iuran.filter(i=>i.anggota===a.nama).reduce((t,i)=>t+i.nominal,0);
+    const p=pinjaman.find(p=>p.anggota===a.nama&&p.sisa>0);
+    return `
+    <div class="card">
+      <b>${a.nama}</b><br>
+      Masuk: ${a.masuk || "-"}
+      <div class="table-wrap">
+      <table>
+        <tr><th>Total Iuran</th><td>Rp ${ti.toLocaleString()}</td></tr>
+        <tr><th>Sisa Pinjaman</th><td>Rp ${(p?p.sisa:0).toLocaleString()}</td></tr>
+      </table>
+      </div>
+      <div class="action-buttons">
+        <button class="btn-small btn-edit" onclick="editAnggota(${idx})">✏️ Edit</button>
+        <button class="btn-small btn-delete" onclick="deleteAnggota(${idx})">🗑️ Hapus</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  listPengajuan.innerHTML=`
+  <div class="table-wrap">
+  <table>
+  <thead><tr><th>Nama</th><th>Nominal</th><th>Tenor</th><th>Status</th><th>Aksi</th></tr></thead>
+  <tbody>
+  ${pengajuan.map(p=>`
+    <tr>
+      <td>${p.anggota}</td>
+      <td>Rp ${p.nominal.toLocaleString()}</td>
+      <td>${p.lama}</td>
+      <td><span class="badge ${p.status==="MENUNGGU"?"badge-wait":"badge-ok"}">${p.status}</span></td>
+      <td>
+        <div class="action-buttons">
+          ${p.status==="MENUNGGU"?`
+            <button class="btn-small" onclick="cairkan(${p.id})">💰 Cairkan</button>
+            <button class="btn-small btn-edit" onclick="editPengajuan(${p.id})">✏️</button>
+            <button class="btn-small btn-delete" onclick="deletePengajuan(${p.id})">🗑️</button>
+          `:`-`}
+        </div>
+      </td>
+    </tr>`).join("")}
+  </tbody></table></div>`;
+
+  listCair.innerHTML=`
+  <div class="table-wrap">
+  <table>
+  <thead><tr><th>Nama</th><th>Pinjaman</th><th>Tenor</th><th>Angsuran</th><th>Sisa</th></tr></thead>
+  <tbody>
+  ${pinjaman.map(p=>`
+    <tr>
+      <td>${p.anggota}</td>
+      <td>Rp ${p.nominal.toLocaleString()}</td>
+      <td>${p.lama}</td>
+      <td>Rp ${p.angsuran.toLocaleString()}</td>
+      <td>Rp ${p.sisa.toLocaleString()}</td>
+    </tr>`).join("")}
+  </tbody></table></div>`;
+
+  listAngsuran.innerHTML=`
+  <div class="table-wrap">
+  <table>
+  <thead><tr><th>Nama</th><th>Nominal</th><th>Ke</th><th>Aksi</th></tr></thead>
+  <tbody>
+  ${angsuran.map((a,idx)=>`
+    <tr>
+      <td>${a.anggota}</td>
+      <td>Rp ${a.nominal.toLocaleString()}</td>
+      <td>${a.ke}</td>
+      <td>
+        <div class="action-buttons">
+          <button class="btn-small btn-edit" onclick="editAngsuran(${idx})">✏️</button>
+          <button class="btn-small btn-delete" onclick="deleteAngsuran(${idx})">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join("")}
+  </tbody></table></div>`;
+
+  listIuran.innerHTML=`
+  <div class="table-wrap">
+  <table>
+  <thead><tr><th>Nama</th><th>Bulan</th><th>Nominal</th><th>Aksi</th></tr></thead>
+  <tbody>
+  ${iuran.map((i,idx)=>`
+    <tr>
+      <td>${i.anggota}</td>
+      <td>${i.bulan}</td>
+      <td>Rp ${i.nominal.toLocaleString()}</td>
+      <td>
+        <div class="action-buttons">
+          <button class="btn-small btn-edit" onclick="editIuran(${idx})">✏️</button>
+          <button class="btn-small btn-delete" onclick="deleteIuran(${idx})">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join("")}
+  </tbody></table></div>`;
+
+  loadSetting();
+}
+
+function loadSetting(){
+  if(setting.title)appTitle.innerText=setting.title;
+  if(setting.sub)appSub.innerText=setting.sub;
+  if(setting.logo)logoApp.src=setting.logo;
+}
+
+renderAll();
+</script>
+
+</body>
+  </html>
