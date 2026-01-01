@@ -316,7 +316,15 @@ function deletePengajuan(id){
 
 function cairkan(id){
   const p=pengajuan.find(x=>x.id===id);
-  pinjaman.push({anggota:p.anggota,nominal:p.nominal,lama:p.lama,angsuran:p.nominal/p.lama,sisa:p.nominal});
+  const tanggalCair = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  pinjaman.push({
+    tanggal:tanggalCair,
+    anggota:p.anggota,
+    nominal:p.nominal,
+    lama:p.lama,
+    angsuran:p.nominal/p.lama,
+    sisa:p.nominal
+  });
   kas.push({jenis:"KREDIT",nominal:p.nominal});
   p.status="CAIR";
   set("pinjaman",pinjaman);set("kas",kas);set("pengajuan",pengajuan);
@@ -523,10 +531,40 @@ function renderAll(){
   listAnggota.innerHTML=anggota.map((a,idx)=>{
     const ti=iuran.filter(i=>i.anggota===a.nama).reduce((t,i)=>t+i.nominal,0);
     const p=pinjaman.find(p=>p.anggota===a.nama&&p.sisa>0);
+    
+    // Hitung durasi keanggotaan
+    let durasiText = "";
+    if(a.masuk){
+      const masuk = new Date(a.masuk);
+      const sekarang = new Date();
+      
+      let tahun = sekarang.getFullYear() - masuk.getFullYear();
+      let bulan = sekarang.getMonth() - masuk.getMonth();
+      let hari = sekarang.getDate() - masuk.getDate();
+      
+      if(hari < 0){
+        bulan--;
+        const bulanLalu = new Date(sekarang.getFullYear(), sekarang.getMonth(), 0);
+        hari += bulanLalu.getDate();
+      }
+      
+      if(bulan < 0){
+        tahun--;
+        bulan += 12;
+      }
+      
+      const parts = [];
+      if(tahun > 0) parts.push(`${tahun} tahun`);
+      if(bulan > 0) parts.push(`${bulan} bulan`);
+      if(hari > 0) parts.push(`${hari} hari`);
+      
+      durasiText = parts.length > 0 ? ` (${parts.join(' ')})` : "";
+    }
+    
     return `
     <div class="card">
       <b>${a.nama}</b><br>
-      Masuk: ${a.masuk || "-"}
+      Masuk: ${a.masuk || "-"}${durasiText}
       <div class="table-wrap">
       <table>
         <tr><th>Total Iuran</th><td>Rp ${ti.toLocaleString()}</td></tr>
@@ -566,10 +604,11 @@ function renderAll(){
   listCair.innerHTML=`
   <div class="table-wrap">
   <table>
-  <thead><tr><th>Nama</th><th>Pinjaman</th><th>Tenor</th><th>Angsuran</th><th>Sisa</th></tr></thead>
+  <thead><tr><th>Tanggal</th><th>Nama</th><th>Pinjaman</th><th>Tenor</th><th>Angsuran</th><th>Sisa</th></tr></thead>
   <tbody>
   ${pinjaman.map(p=>`
     <tr>
+      <td>${p.tanggal || '-'}</td>
       <td>${p.anggota}</td>
       <td>Rp ${p.nominal.toLocaleString()}</td>
       <td>${p.lama}</td>
@@ -631,4 +670,4 @@ renderAll();
 </script>
 
 </body>
-  </html>
+</html>
