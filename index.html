@@ -161,6 +161,27 @@ h3 { margin-top: 0; color: #1f2937; }
 .flex { display: flex; }
 .gap-2 { gap: 8px; }
 
+/* Style untuk kolom total iuran */
+.total-iuran {
+  font-weight: bold;
+  color: #059669;
+  background: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Watermark style */
+.watermark {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  color: #9ca3af;
+  font-size: 11px;
+  font-style: italic;
+}
+
 @media(max-width: 640px) {
   .container { padding: 12px; }
   .login-box { margin: 20px; padding: 20px; }
@@ -217,6 +238,11 @@ h3 { margin-top: 0; color: #1f2937; }
         <button class="btn-secondary" onclick="saveConfig()" style="flex: 1;">Simpan</button>
         <button class="btn-warning" onclick="testConnection()" style="flex: 1;">Test Koneksi</button>
       </div>
+    </div>
+    
+    <!-- WATERMARK - Created & Developed by D.D Candra -->
+    <div class="watermark">
+      Created & Developed by <strong>D.D Candra</strong>
     </div>
   </div>
 </div>
@@ -288,6 +314,10 @@ h3 { margin-top: 0; color: #1f2937; }
         <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; padding: 20px; border-radius: 12px;">
           <div style="font-size: 14px; opacity: 0.9;">Jumlah Anggota</div>
           <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashAnggota">0</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #fff; padding: 20px; border-radius: 12px;">
+          <div style="font-size: 14px; opacity: 0.9;">Total Iuran Terkumpul</div>
+          <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashTotalIuran">Rp 0</div>
         </div>
       </div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 20px;">Kembali</button>
@@ -759,6 +789,15 @@ function backToMenu() {
 }
 
 // ==========================================
+// HELPER: HITUNG TOTAL IURAN ANGGOTA
+// ==========================================
+function getTotalIuranAnggota(namaAnggota) {
+  return appData.iuran
+    .filter(function(i) { return i.anggota === namaAnggota; })
+    .reduce(function(total, i) { return total + (i.nominal || 0); }, 0);
+}
+
+// ==========================================
 // RENDER
 // ==========================================
 function updateDashboard() {
@@ -773,16 +812,22 @@ function updateDashboard() {
     return a + b.sisa;
   }, 0);
   
+  // Hitung total semua iuran
+  var totalIuran = appData.iuran.reduce(function(a, b) {
+    return a + (b.nominal || 0);
+  }, 0);
+  
   document.getElementById('dashKas').textContent = 'Rp ' + kas.toLocaleString('id-ID');
   document.getElementById('dashPiutang').textContent = 'Rp ' + piutang.toLocaleString('id-ID');
   document.getElementById('dashAnggota').textContent = appData.anggota.length;
+  document.getElementById('dashTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
 }
 
 function renderPage(page) {
   updateDashboard();
   
   if (page === 'anggota') renderAnggota();
-  else if (page === 'pengajuan') renderPengajuan();
+  else if (page === 'engajuan') renderPengajuan();
   else if (page === 'pencairan') renderPencairan();
   else if (page === 'angsuran') renderAngsuran();
   else if (page === 'iuran') renderIuran();
@@ -796,7 +841,7 @@ function renderAnggota() {
     return;
   }
   
-  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Masuk</th><th>Lama</th><th>Aksi</th></tr></thead><tbody>';
+  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Masuk</th><th>Lama</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
   
   appData.anggota.forEach(function(a) {
     var tgl = a.masuk ? new Date(a.masuk).toLocaleDateString('id-ID') : '-';
@@ -820,7 +865,10 @@ function renderAnggota() {
       lamaText = parts.join(' ') || '1 hari';
     }
     
-    html += '<tr><td><strong>' + a.nama + '</strong></td><td>' + tgl + '</td><td>' + lamaText + '</td><td>' +
+    // Hitung total iuran untuk anggota ini
+    var totalIuran = getTotalIuranAnggota(a.nama);
+    
+    html += '<tr><td><strong>' + a.nama + '</strong></td><td>' + tgl + '</td><td>' + lamaText + '</td><td><span class="total-iuran">Rp ' + totalIuran.toLocaleString('id-ID') + '</span></td><td>' +
       '<button class="btn-small btn-warning" onclick="editAnggota(\'' + a.id + '\')">Edit</button>' +
       '<button class="btn-small btn-danger" onclick="deleteAnggota(\'' + a.id + '\')">Hapus</button>' +
       '</td></tr>';
@@ -1319,7 +1367,7 @@ function downloadReport() {
   // Footer
   doc.setFontSize(8);
   doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), margin, 285);
-  doc.text('Created by D.D Candra', pageWidth - margin, 285, { align: 'right' });
+  doc.text('Created & Developed by D.D Candra', pageWidth - margin, 285, { align: 'right' });
   
   doc.save('rekening_koran_' + today.toISOString().split('T')[0] + '.pdf');
 }
