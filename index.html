@@ -182,6 +182,83 @@ h3 { margin-top: 0; color: #1f2937; }
   font-style: italic;
 }
 
+/* Style untuk search dan filter */
+.search-box {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #2563eb;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.detail-card {
+  background: #f9fafb;
+  border-left: 4px solid #2563eb;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 0 8px 8px 0;
+}
+
+.detail-title {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.detail-content {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.activity-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-date {
+  color: #9ca3af;
+  font-size: 11px;
+}
+
 @media(max-width: 640px) {
   .container { padding: 12px; }
   .login-box { margin: 20px; padding: 20px; }
@@ -288,6 +365,10 @@ h3 { margin-top: 0; color: #1f2937; }
         <span class="menu-icon">🔄</span>
         <span class="menu-text">Iuran Rutin</span>
       </div>
+      <div class="menu-item" onclick="navigate('saldo')">
+        <span class="menu-icon">💳</span>
+        <span class="menu-text">Manajemen Saldo</span>
+      </div>
       <div class="menu-item" onclick="navigate('laporan')">
         <span class="menu-icon">📄</span>
         <span class="menu-text">Laporan</span>
@@ -326,6 +407,45 @@ h3 { margin-top: 0; color: #1f2937; }
     <!-- ANGGOTA -->
     <div id="anggota" class="card hidden">
       <h3>👥 Data Anggota</h3>
+      
+      <!-- Statistik Anggota -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statTotalAnggota">0</div>
+          <div class="stat-label">Total Anggota</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAnggotaAktif">0</div>
+          <div class="stat-label">Anggota Aktif</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTotalIuran">Rp 0</div>
+          <div class="stat-label">Total Iuran</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTotalPinjaman">Rp 0</div>
+          <div class="stat-label">Total Pinjaman</div>
+        </div>
+      </div>
+      
+      <!-- Search Anggota -->
+      <div class="form-group">
+        <label>Cari Anggota (Lihat Detail Aktivitas)</label>
+        <input type="text" id="searchAnggota" class="search-box" placeholder="Ketik nama anggota..." oninput="searchAnggotaDetail()">
+      </div>
+      
+      <!-- Detail Anggota Container -->
+      <div id="detailAnggotaContainer" class="hidden">
+        <div class="detail-card">
+          <div class="detail-title" id="detailNamaAnggota">Detail Anggota</div>
+          <div id="detailContent"></div>
+          <button onclick="downloadDetailPDF()" class="btn-success" style="margin-top: 12px;">📥 Download PDF</button>
+        </div>
+      </div>
+      
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+      
+      <h4>Tambah/Edit Anggota</h4>
       <div class="form-group">
         <label>Nama Lengkap</label>
         <input id="aggNama" placeholder="Masukkan nama">
@@ -446,6 +566,48 @@ h3 { margin-top: 0; color: #1f2937; }
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
     
+    <!-- SALDO MANAJEMEN -->
+    <div id="saldo" class="card hidden">
+      <h3>💳 Manajemen Saldo</h3>
+      
+      <div class="stats-grid" style="margin-bottom: 20px;">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+          <div class="stat-value" id="saldoTotal" style="color: white; font-size: 24px;">Rp 0</div>
+          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Saldo Saat Ini</div>
+        </div>
+      </div>
+      
+      <h4>Tambah/Edit Saldo</h4>
+      <div class="form-group">
+        <label>Jenis Transaksi</label>
+        <select id="saldoJenis">
+          <option value="DEBET">Debet (Masuk)</option>
+          <option value="KREDIT">Kredit (Keluar)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nominal (Rp)</label>
+        <input type="number" id="saldoNominal" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Keterangan</label>
+        <input type="text" id="saldoKeterangan" placeholder="Keterangan transaksi">
+      </div>
+      <div class="form-group">
+        <label>Tanggal</label>
+        <input type="date" id="saldoTanggal">
+      </div>
+      <input type="hidden" id="saldoId">
+      <div class="flex gap-2">
+        <button onclick="saveSaldo()" style="flex: 1;">Simpan</button>
+        <button class="btn-secondary" onclick="resetSaldoForm()" style="flex: 1;">Reset</button>
+      </div>
+      
+      <h4 style="margin-top: 24px;">Riwayat Transaksi Saldo</h4>
+      <div id="saldoList" class="mt-4"></div>
+      <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
+    </div>
+    
     <!-- LAPORAN -->
     <div id="laporan" class="card hidden">
       <h3>📄 Laporan</h3>
@@ -495,6 +657,7 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sbClient = null;
 var isDemoMode = false;
 var currentUser = null;
+var currentDetailAnggota = null;
 
 var appData = {
   anggota: [],
@@ -523,9 +686,24 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('sbUrl').value = SB_URL;
   document.getElementById('sbKey').value = SB_KEY;
   
+  // Load settings from localStorage first
+  loadSettingsFromStorage();
+  
   initSupabase();
   setTimeout(checkConnection, 1000);
 });
+
+function loadSettingsFromStorage() {
+  var savedSettings = localStorage.getItem('paguyuban_settings');
+  if (savedSettings) {
+    try {
+      var parsed = JSON.parse(savedSettings);
+      Object.assign(appData.settings, parsed);
+    } catch (e) {
+      console.error('Failed to load settings:', e);
+    }
+  }
+}
 
 function initSupabase() {
   try {
@@ -700,6 +878,17 @@ function enterApp() {
   }
   
   updateDashboard();
+  updateHeaderSettings();
+}
+
+function updateHeaderSettings() {
+  // Update header dengan settings yang tersimpan
+  document.getElementById('appTitle').textContent = appData.settings.nama || 'Paguyuban';
+  document.getElementById('appSubtitle').textContent = appData.settings.tagline || 'Simpan Pinjam';
+  
+  if (appData.settings.logo) {
+    document.getElementById('logoImg').src = appData.settings.logo;
+  }
 }
 
 function doLogout() {
@@ -754,6 +943,8 @@ async function loadFromSupabase() {
     
     if (results[6].data && results[6].data.value) {
       Object.assign(appData.settings, results[6].data.value);
+      localStorage.setItem('paguyuban_settings', JSON.stringify(appData.settings));
+      updateHeaderSettings();
     }
     
   } catch (e) {
@@ -786,6 +977,9 @@ function backToMenu() {
     c.classList.add('hidden');
   });
   document.getElementById('menu').classList.remove('hidden');
+  currentDetailAnggota = null;
+  document.getElementById('detailAnggotaContainer').classList.add('hidden');
+  document.getElementById('searchAnggota').value = '';
 }
 
 // ==========================================
@@ -827,14 +1021,26 @@ function renderPage(page) {
   updateDashboard();
   
   if (page === 'anggota') renderAnggota();
-  else if (page === 'engajuan') renderPengajuan();
+  else if (page === 'pengajuan') renderPengajuan();
   else if (page === 'pencairan') renderPencairan();
   else if (page === 'angsuran') renderAngsuran();
   else if (page === 'iuran') renderIuran();
+  else if (page === 'saldo') renderSaldo();
   else if (page === 'pengaturan') renderSettings();
 }
 
 function renderAnggota() {
+  // Update statistik
+  var totalAnggota = appData.anggota.length;
+  var anggotaAktif = appData.pinjaman.filter(function(p) { return p.sisa > 0; }).length;
+  var totalIuran = appData.iuran.reduce(function(a, b) { return a + (b.nominal || 0); }, 0);
+  var totalPinjaman = appData.pinjaman.reduce(function(a, b) { return a + b.nominal; }, 0);
+  
+  document.getElementById('statTotalAnggota').textContent = totalAnggota;
+  document.getElementById('statAnggotaAktif').textContent = anggotaAktif;
+  document.getElementById('statTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
+  document.getElementById('statTotalPinjaman').textContent = 'Rp ' + totalPinjaman.toLocaleString('id-ID');
+  
   var list = document.getElementById('aggList');
   if (!appData.anggota.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👤</div><p>Belum ada anggota</p></div>';
@@ -876,6 +1082,284 @@ function renderAnggota() {
   
   html += '</tbody></table></div>';
   list.innerHTML = html;
+}
+
+// ==========================================
+// SEARCH & DETAIL ANGGOTA
+// ==========================================
+function searchAnggotaDetail() {
+  var searchTerm = document.getElementById('searchAnggota').value.toLowerCase().trim();
+  var container = document.getElementById('detailAnggotaContainer');
+  
+  if (!searchTerm) {
+    container.classList.add('hidden');
+    currentDetailAnggota = null;
+    return;
+  }
+  
+  var anggota = appData.anggota.find(function(a) {
+    return a.nama.toLowerCase().includes(searchTerm);
+  });
+  
+  if (!anggota) {
+    container.classList.remove('hidden');
+    document.getElementById('detailNamaAnggota').textContent = 'Anggota tidak ditemukan';
+    document.getElementById('detailContent').innerHTML = '<p>Tidak ada data untuk "' + searchTerm + '"</p>';
+    currentDetailAnggota = null;
+    return;
+  }
+  
+  currentDetailAnggota = anggota;
+  showDetailAnggota(anggota);
+}
+
+function showDetailAnggota(anggota) {
+  var container = document.getElementById('detailAnggotaContainer');
+  container.classList.remove('hidden');
+  document.getElementById('detailNamaAnggota').textContent = 'Detail: ' + anggota.nama;
+  
+  // Hitung data anggota
+  var totalIuran = getTotalIuranAnggota(anggota.nama);
+  
+  var pinjamanAktif = appData.pinjaman.filter(function(p) {
+    return p.anggota === anggota.nama && p.sisa > 0;
+  });
+  
+  var sisaHutang = pinjamanAktif.reduce(function(sum, p) {
+    return sum + p.sisa;
+  }, 0);
+  
+  var totalPinjaman = appData.pinjaman
+    .filter(function(p) { return p.anggota === anggota.nama; })
+    .reduce(function(sum, p) { return sum + p.nominal; }, 0);
+  
+  var angsuranList = appData.angsuran.filter(function(a) {
+    return a.anggota === anggota.nama;
+  });
+  
+  var pengajuanList = appData.pengajuan.filter(function(p) {
+    return p.anggota === anggota.nama;
+  });
+  
+  // Format tanggal bergabung
+  var tglBergabung = anggota.masuk ? 
+    new Date(anggota.masuk).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 
+    'Tidak tercatat';
+  
+  var html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">';
+  html += '<div class="stat-card"><div class="stat-value" style="color: #059669;">Rp ' + totalIuran.toLocaleString('id-ID') + '</div><div class="stat-label">Total Iuran</div></div>';
+  html += '<div class="stat-card"><div class="stat-value" style="color: #dc2626;">Rp ' + sisaHutang.toLocaleString('id-ID') + '</div><div class="stat-label">Sisa Hutang</div></div>';
+  html += '<div class="stat-card"><div class="stat-value">Rp ' + totalPinjaman.toLocaleString('id-ID') + '</div><div class="stat-label">Total Pinjaman</div></div>';
+  html += '<div class="stat-card"><div class="stat-value">' + angsuranList.length + '</div><div class="stat-label">Total Angsuran</div></div>';
+  html += '</div>';
+  
+  html += '<div class="detail-content">';
+  html += '<p><strong>📅 Bergabung:</strong> ' + tglBergabung + '</p>';
+  
+  // Riwayat Pinjaman
+  html += '<h4 style="margin-top: 16px; color: #374151;">📋 Riwayat Pinjaman</h4>';
+  if (pinjamanAktif.length === 0 && totalPinjaman === 0) {
+    html += '<p>Tidak ada riwayat pinjaman</p>';
+  } else {
+    html += '<div class="activity-list">';
+    appData.pinjaman.filter(function(p) { return p.anggota === anggota.nama; }).forEach(function(p) {
+      var status = p.sisa > 0 ? '<span class="badge badge-wait">Berjalan</span>' : '<span class="badge badge-ok">Lunas</span>';
+      html += '<div class="activity-item">';
+      html += '<div>Pinjaman Rp ' + p.nominal.toLocaleString('id-ID') + ' ' + status + '</div>';
+      html += '<div class="activity-date">Angsuran: Rp ' + p.angsuran.toLocaleString('id-ID') + '/bulan | Sisa: Rp ' + p.sisa.toLocaleString('id-ID') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // Riwayat Angsuran
+  html += '<h4 style="margin-top: 16px; color: #374151;">💵 Riwayat Pembayaran Angsuran</h4>';
+  if (angsuranList.length === 0) {
+    html += '<p>Belum ada pembayaran angsuran</p>';
+  } else {
+    html += '<div class="activity-list">';
+    angsuranList.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).forEach(function(a) {
+      html += '<div class="activity-item">';
+      html += '<div>Angsuran ke-' + a.ke + ': Rp ' + a.nominal.toLocaleString('id-ID') + '</div>';
+      html += '<div class="activity-date">' + new Date(a.created_at).toLocaleDateString('id-ID') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  
+  // Riwayat Iuran
+  html += '<h4 style="margin-top: 16px; color: #374151;">🔄 Riwayat Iuran</h4>';
+  var iuranList = appData.iuran.filter(function(i) { return i.anggota === anggota.nama; });
+  if (iuranList.length === 0) {
+    html += '<p>Belum ada pembayaran iuran</p>';
+  } else {
+    html += '<div class="activity-list">';
+    iuranList.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).forEach(function(i) {
+      html += '<div class="activity-item">';
+      html += '<div>Iuran ' + i.bulan + ': Rp ' + i.nominal.toLocaleString('id-ID') + '</div>';
+      html += '<div class="activity-date">' + new Date(i.created_at).toLocaleDateString('id-ID') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  
+  document.getElementById('detailContent').innerHTML = html;
+}
+
+function downloadDetailPDF() {
+  if (!currentDetailAnggota) {
+    alert('Pilih anggota terlebih dahulu');
+    return;
+  }
+  
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF('p', 'mm', 'a4');
+  
+  var pageWidth = doc.internal.pageSize.getWidth();
+  var margin = 15;
+  var contentWidth = pageWidth - (margin * 2);
+  var yPos = 20;
+  
+  var anggota = currentDetailAnggota;
+  var totalIuran = getTotalIuranAnggota(anggota.nama);
+  
+  var sisaHutang = appData.pinjaman
+    .filter(function(p) { return p.anggota === anggota.nama && p.sisa > 0; })
+    .reduce(function(sum, p) { return sum + p.sisa; }, 0);
+  
+  var totalPinjaman = appData.pinjaman
+    .filter(function(p) { return p.anggota === anggota.nama; })
+    .reduce(function(sum, p) { return sum + p.nominal; }, 0);
+  
+  // Header
+  doc.setFontSize(16);
+  doc.setFont(undefined, 'bold');
+  doc.text('LAPORAN DETAIL ANGGOTA', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 10;
+  
+  doc.setFontSize(12);
+  doc.text(appData.settings.nama || 'Paguyuban Simpan Pinjam', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 6;
+  
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text(appData.settings.alamat || 'Politeknik Negeri Madura', pageWidth / 2, yPos, { align: 'center' });
+  yPos += 15;
+  
+  // Info Anggota
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('DATA ANGGOTA', margin, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text('Nama: ' + anggota.nama, margin, yPos);
+  yPos += 6;
+  doc.text('Tanggal Bergabung: ' + (anggota.masuk ? new Date(anggota.masuk).toLocaleDateString('id-ID') : '-'), margin, yPos);
+  yPos += 10;
+  
+  // Ringkasan Keuangan
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('RINGKASAN KEUANGAN', margin, yPos);
+  yPos += 8;
+  
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  doc.text('Total Iuran: Rp ' + totalIuran.toLocaleString('id-ID'), margin, yPos);
+  yPos += 6;
+  doc.text('Total Pinjaman: Rp ' + totalPinjaman.toLocaleString('id-ID'), margin, yPos);
+  yPos += 6;
+  doc.text('Sisa Hutang: Rp ' + sisaHutang.toLocaleString('id-ID'), margin, yPos);
+  yPos += 10;
+  
+  // Riwayat Pinjaman
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('RIWAYAT PINJAMAN', margin, yPos);
+  yPos += 8;
+  
+  var pinjamanList = appData.pinjaman.filter(function(p) { return p.anggota === anggota.nama; });
+  if (pinjamanList.length === 0) {
+    doc.setFontSize(10);
+    doc.text('Tidak ada riwayat pinjaman', margin, yPos);
+    yPos += 6;
+  } else {
+    doc.setFontSize(9);
+    pinjamanList.forEach(function(p) {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      var status = p.sisa > 0 ? 'Berjalan' : 'Lunas';
+      doc.text('- Pinjaman Rp ' + p.nominal.toLocaleString('id-ID') + ' (' + status + ')', margin, yPos);
+      yPos += 5;
+      doc.text('  Angsuran: Rp ' + p.angsuran.toLocaleString('id-ID') + '/bulan | Sisa: Rp ' + p.sisa.toLocaleString('id-ID'), margin + 5, yPos);
+      yPos += 6;
+    });
+  }
+  yPos += 4;
+  
+  // Riwayat Angsuran
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('RIWAYAT PEMBAYARAN ANGSURAN', margin, yPos);
+  yPos += 8;
+  
+  var angsuranList = appData.angsuran.filter(function(a) { return a.anggota === anggota.nama; });
+  if (angsuranList.length === 0) {
+    doc.setFontSize(10);
+    doc.text('Belum ada pembayaran angsuran', margin, yPos);
+    yPos += 6;
+  } else {
+    doc.setFontSize(9);
+    angsuranList.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).forEach(function(a) {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text('- Angsuran ke-' + a.ke + ': Rp ' + a.nominal.toLocaleString('id-ID'), margin, yPos);
+      yPos += 5;
+      doc.text('  Tanggal: ' + new Date(a.created_at).toLocaleDateString('id-ID'), margin + 5, yPos);
+      yPos += 6;
+    });
+  }
+  yPos += 4;
+  
+  // Riwayat Iuran
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('RIWAYAT IURAN', margin, yPos);
+  yPos += 8;
+  
+  var iuranList = appData.iuran.filter(function(i) { return i.anggota === anggota.nama; });
+  if (iuranList.length === 0) {
+    doc.setFontSize(10);
+    doc.text('Belum ada pembayaran iuran', margin, yPos);
+    yPos += 6;
+  } else {
+    doc.setFontSize(9);
+    iuranList.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).forEach(function(i) {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text('- Iuran ' + i.bulan + ': Rp ' + i.nominal.toLocaleString('id-ID'), margin, yPos);
+      yPos += 5;
+      doc.text('  Tanggal: ' + new Date(i.created_at).toLocaleDateString('id-ID'), margin + 5, yPos);
+      yPos += 6;
+    });
+  }
+  
+  // Footer
+  doc.setFontSize(8);
+  doc.text('Dicetak: ' + new Date().toLocaleString('id-ID'), margin, 285);
+  doc.text('Created & Developed by D.D Candra', pageWidth - margin, 285, { align: 'right' });
+  
+  doc.save('detail_' + anggota.nama.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.pdf');
 }
 
 function renderPengajuan() {
@@ -967,13 +1451,171 @@ function renderIuran() {
   list.innerHTML = html;
 }
 
+// ==========================================
+// SALDO MANAJEMEN
+// ==========================================
+function renderSaldo() {
+  // Hitung total saldo
+  var totalSaldo = appData.kas.reduce(function(a, b) {
+    return a + (b.jenis === 'DEBET' ? b.nominal : -b.nominal);
+  }, 0);
+  
+  document.getElementById('saldoTotal').textContent = 'Rp ' + totalSaldo.toLocaleString('id-ID');
+  
+  // Set default tanggal hari ini
+  if (!document.getElementById('saldoTanggal').value) {
+    document.getElementById('saldoTanggal').value = new Date().toISOString().split('T')[0];
+  }
+  
+  var list = document.getElementById('saldoList');
+  if (!appData.kas.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💳</div><p>Belum ada transaksi saldo</p></div>';
+    return;
+  }
+  
+  var html = '<div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Keterangan</th><th>Jenis</th><th>Nominal</th><th>Aksi</th></tr></thead><tbody>';
+  var reversed = appData.kas.slice().reverse();
+  reversed.forEach(function(k) {
+    var jenisBadge = k.jenis === 'DEBET' ? 
+      '<span class="badge badge-ok">DEBET</span>' : 
+      '<span class="badge badge-wait">KREDIT</span>';
+    
+    html += '<tr><td>' + new Date(k.created_at || k.tanggal || new Date()).toLocaleDateString('id-ID') + '</td>' +
+      '<td>' + (k.keterangan || '-') + '</td>' +
+      '<td>' + jenisBadge + '</td>' +
+      '<td>Rp ' + (k.nominal || 0).toLocaleString('id-ID') + '</td>' +
+      '<td>' +
+      '<button class="btn-small btn-warning" onclick="editSaldo(\'' + k.id + '\')">Edit</button>' +
+      '<button class="btn-small btn-danger" onclick="deleteSaldo(\'' + k.id + '\')">Hapus</button>' +
+      '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  list.innerHTML = html;
+}
+
+function resetSaldoForm() {
+  document.getElementById('saldoJenis').value = 'DEBET';
+  document.getElementById('saldoNominal').value = '';
+  document.getElementById('saldoKeterangan').value = '';
+  document.getElementById('saldoTanggal').value = new Date().toISOString().split('T')[0];
+  document.getElementById('saldoId').value = '';
+}
+
+async function saveSaldo() {
+  var jenis = document.getElementById('saldoJenis').value;
+  var nominal = parseInt(document.getElementById('saldoNominal').value);
+  var keterangan = document.getElementById('saldoKeterangan').value.trim();
+  var tanggal = document.getElementById('saldoTanggal').value;
+  var id = document.getElementById('saldoId').value;
+  
+  if (!nominal || nominal <= 0) {
+    alert('Nominal harus lebih dari 0!');
+    return;
+  }
+  
+  if (isDemoMode) {
+    if (id) {
+      // Edit mode
+      var idx = appData.kas.findIndex(function(k) { return k.id === id; });
+      if (idx >= 0) {
+        appData.kas[idx].jenis = jenis;
+        appData.kas[idx].nominal = nominal;
+        appData.kas[idx].keterangan = keterangan;
+        appData.kas[idx].tanggal = tanggal;
+        appData.kas[idx].created_at = tanggal + 'T00:00:00.000Z';
+      }
+    } else {
+      // Add new
+      appData.kas.push({
+        id: 'demo_' + Date.now(),
+        jenis: jenis,
+        nominal: nominal,
+        keterangan: keterangan,
+        tanggal: tanggal,
+        created_at: tanggal ? tanggal + 'T00:00:00.000Z' : new Date().toISOString()
+      });
+    }
+    saveDemoData();
+    resetSaldoForm();
+    renderSaldo();
+    updateDashboard();
+    return;
+  }
+  
+  showLoading(true);
+  try {
+    if (id) {
+      await sbClient.from('kas').update({
+        jenis: jenis,
+        nominal: nominal,
+        keterangan: keterangan,
+        tanggal: tanggal,
+        created_at: tanggal ? tanggal + 'T00:00:00.000Z' : new Date().toISOString()
+      }).eq('id', id);
+    } else {
+      await sbClient.from('kas').insert([{
+        jenis: jenis,
+        nominal: nominal,
+        keterangan: keterangan,
+        tanggal: tanggal,
+        created_at: tanggal ? tanggal + 'T00:00:00.000Z' : new Date().toISOString()
+      }]);
+    }
+    await loadFromSupabase();
+    resetSaldoForm();
+    renderSaldo();
+    updateDashboard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+  showLoading(false);
+}
+
+function editSaldo(id) {
+  var k = appData.kas.find(function(x) { return x.id === id; });
+  if (!k) return;
+  
+  document.getElementById('saldoJenis').value = k.jenis;
+  document.getElementById('saldoNominal').value = k.nominal;
+  document.getElementById('saldoKeterangan').value = k.keterangan || '';
+  document.getElementById('saldoTanggal').value = k.tanggal || (k.created_at ? k.created_at.split('T')[0] : '');
+  document.getElementById('saldoId').value = id;
+}
+
+async function deleteSaldo(id) {
+  if (!confirm('Yakin hapus transaksi saldo ini?')) return;
+  
+  if (isDemoMode) {
+    appData.kas = appData.kas.filter(function(k) { return k.id !== id; });
+    saveDemoData();
+    renderSaldo();
+    updateDashboard();
+    return;
+  }
+  
+  showLoading(true);
+  try {
+    await sbClient.from('kas').delete().eq('id', id);
+    await loadFromSupabase();
+    renderSaldo();
+    updateDashboard();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+  showLoading(false);
+}
+
 function renderSettings() {
   document.getElementById('setNama').value = appData.settings.nama || '';
   document.getElementById('setTagline').value = appData.settings.tagline || '';
   document.getElementById('setAlamat').value = appData.settings.alamat || '';
+  
+  var logoPreview = document.getElementById('logoPreview');
   if (appData.settings.logo) {
-    document.getElementById('logoPreview').src = appData.settings.logo;
-    document.getElementById('logoPreview').style.display = 'block';
+    logoPreview.src = appData.settings.logo;
+    logoPreview.style.display = 'block';
+  } else {
+    logoPreview.style.display = 'none';
   }
 }
 
@@ -1097,7 +1739,7 @@ async function cairkan(id) {
   if (isDemoMode) {
     p.status = 'DICAIRKAN';
     appData.pinjaman.push({ id: 'demo_' + Date.now(), anggota: p.anggota, nominal: p.nominal, lama: p.lama, angsuran: angsuran, sisa: p.nominal, tanggal: today, created_at: new Date().toISOString() });
-    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'KREDIT', nominal: p.nominal, created_at: new Date().toISOString() });
+    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'KREDIT', nominal: p.nominal, keterangan: 'Pencairan pinjaman ' + p.anggota, tanggal: today, created_at: new Date().toISOString() });
     saveDemoData();
     renderPengajuan();
     return;
@@ -1107,7 +1749,7 @@ async function cairkan(id) {
   try {
     await sbClient.from('pengajuan').update({ status: 'DICAIRKAN' }).eq('id', id);
     await sbClient.from('pinjaman').insert([{ anggota: p.anggota, nominal: p.nominal, lama: p.lama, angsuran: angsuran, sisa: p.nominal, tanggal: today }]);
-    await sbClient.from('kas').insert([{ jenis: 'KREDIT', nominal: p.nominal }]);
+    await sbClient.from('kas').insert([{ jenis: 'KREDIT', nominal: p.nominal, keterangan: 'Pencairan pinjaman ' + p.anggota, tanggal: today }]);
     await loadFromSupabase();
     renderPengajuan();
   } catch (e) { alert('Error: ' + e.message); }
@@ -1160,7 +1802,7 @@ async function saveAngsuran() {
   if (isDemoMode) {
     appData.angsuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, ke: ke, created_at: new Date().toISOString() });
     p.sisa -= nominal;
-    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, created_at: new Date().toISOString() });
+    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke, created_at: new Date().toISOString() });
     saveDemoData();
     document.getElementById('angAnggota').value = '';
     document.getElementById('angNominal').value = '';
@@ -1174,7 +1816,7 @@ async function saveAngsuran() {
   try {
     await sbClient.from('angsuran').insert([{ anggota: anggota, nominal: nominal, ke: ke }]);
     await sbClient.from('pinjaman').update({ sisa: p.sisa - nominal }).eq('id', p.id);
-    await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal }]);
+    await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke }]);
     await loadFromSupabase();
     document.getElementById('angNominal').value = '';
     document.getElementById('angKe').value = '';
@@ -1193,7 +1835,7 @@ async function saveIuran() {
   
   if (isDemoMode) {
     appData.iuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, bulan: bulan, created_at: new Date().toISOString() });
-    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, created_at: new Date().toISOString() });
+    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Iuran ' + anggota + ' ' + bulan, created_at: new Date().toISOString() });
     saveDemoData();
     document.getElementById('iurAnggota').value = '';
     document.getElementById('iurNominal').value = '';
@@ -1205,7 +1847,7 @@ async function saveIuran() {
   showLoading(true);
   try {
     await sbClient.from('iuran').insert([{ anggota: anggota, nominal: nominal, bulan: bulan }]);
-    await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal }]);
+    await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Iuran ' + anggota + ' ' + bulan }]);
     await loadFromSupabase();
     document.getElementById('iurNominal').value = '';
     document.getElementById('iurBulan').value = '';
@@ -1214,19 +1856,57 @@ async function saveIuran() {
   showLoading(false);
 }
 
-function saveSettings() {
-  appData.settings.nama = document.getElementById('setNama').value || 'Paguyuban Simpan Pinjam';
-  appData.settings.tagline = document.getElementById('setTagline').value || '';
-  appData.settings.alamat = document.getElementById('setAlamat').value || 'Politeknik Negeri Madura';
+async function saveSettings() {
+  var nama = document.getElementById('setNama').value || 'Paguyuban Simpan Pinjam';
+  var tagline = document.getElementById('setTagline').value || '';
+  var alamat = document.getElementById('setAlamat').value || 'Politeknik Negeri Madura';
   
   var logoPreview = document.getElementById('logoPreview');
-  if (logoPreview.src && logoPreview.style.display !== 'none') {
-    appData.settings.logo = logoPreview.src;
+  var logo = null;
+  if (logoPreview.src && logoPreview.style.display !== 'none' && logoPreview.src.includes('data:image')) {
+    logo = logoPreview.src;
   }
   
-  saveDemoData();
-  updateDashboard();
-  alert('Pengaturan disimpan!');
+  appData.settings = {
+    nama: nama,
+    tagline: tagline,
+    alamat: alamat,
+    logo: logo
+  };
+  
+  // Simpan ke localStorage terlebih dahulu
+  localStorage.setItem('paguyuban_settings', JSON.stringify(appData.settings));
+  
+  // Update tampilan header langsung
+  updateHeaderSettings();
+  
+  if (isDemoMode) {
+    saveDemoData();
+    alert('Pengaturan disimpan!');
+    return;
+  }
+  
+  showLoading(true);
+  try {
+    // Cek apakah sudah ada settings
+    var check = await sbClient.from('setting').select('*').eq('key', 'app').single();
+    
+    if (check.data) {
+      // Update existing
+      await sbClient.from('setting').update({ value: appData.settings }).eq('key', 'app');
+    } else {
+      // Insert new
+      await sbClient.from('setting').insert([{ key: 'app', value: appData.settings }]);
+    }
+    
+    await loadFromSupabase();
+    alert('Pengaturan disimpan!');
+  } catch (e) {
+    console.error('Save settings error:', e);
+    // Tetap tampilkan sukses karena sudah disimpan di localStorage
+    alert('Pengaturan disimpan (mode lokal)!');
+  }
+  showLoading(false);
 }
 
 function exportData() {
@@ -1323,8 +2003,8 @@ function downloadReport() {
   // Kumpulkan semua transaksi
   appData.kas.forEach(function(k) {
     transaksiList.push({
-      tanggal: k.created_at,
-      keterangan: k.jenis === 'DEBET' ? 'Penerimaan' : 'Pencairan Pinjaman',
+      tanggal: k.created_at || k.tanggal || new Date().toISOString(),
+      keterangan: k.keterangan || (k.jenis === 'DEBET' ? 'Penerimaan' : 'Pencairan Pinjaman'),
       debet: k.jenis === 'DEBET' ? k.nominal : 0,
       kredit: k.jenis === 'KREDIT' ? k.nominal : 0
     });
