@@ -290,6 +290,61 @@ h3 { margin-top: 0; color: #1f2937; }
   font-size: 13px;
 }
 
+/* Summary box styles */
+.summary-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.summary-item {
+  text-align: center;
+  padding: 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.summary-label {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Grand total styles */
+.grand-total {
+  background: #f0fdf4;
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.grand-total-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #059669;
+}
+
+.grand-total-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
 @media(max-width: 640px) {
   .container { padding: 12px; }
   .login-box { margin: 20px; padding: 20px; }
@@ -564,38 +619,44 @@ h3 { margin-top: 0; color: #1f2937; }
     <!-- ANGSURAN -->
     <div id="angsuran" class="card hidden">
       <h3>💵 Pembayaran Angsuran</h3>
-      <div class="form-group">
-        <label>Nama Anggota</label>
-        <select id="angAnggota" onchange="calcSisa()"><option value="">Pilih Anggota</option></select>
+      
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <h4 style="margin-top: 0; color: #0369a1; font-size: 14px;">🔍 Filter Angsuran</h4>
+        <div class="filter-grid">
+          <div class="form-group">
+            <label>Nama Anggota</label>
+            <select id="filterAngsuranNama" onchange="applyFilterAngsuran()">
+              <option value="">Semua Anggota</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Bulan</label>
+            <input type="month" id="filterAngsuranBulan" onchange="applyFilterAngsuran()">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Spesifik</label>
+            <input type="date" id="filterAngsuranTanggal" onchange="applyFilterAngsuran()">
+          </div>
+          <div class="form-group">
+            <label>Minggu Ke</label>
+            <select id="filterAngsuranMinggu" onchange="applyFilterAngsuran()">
+              <option value="">Semua Minggu</option>
+              <option value="1">Minggu 1</option>
+              <option value="2">Minggu 2</option>
+              <option value="3">Minggu 3</option>
+              <option value="4">Minggu 4</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-secondary" onclick="resetFilterAngsuran()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
       </div>
-      <div class="form-group">
-        <label>Nominal Bayar (Rp)</label>
-        <input type="number" id="angNominal" placeholder="0" oninput="calcSisa()">
+      
+      <!-- Total Angsuran -->
+      <div id="totalAngsuranContainer" class="grand-total hidden">
+        <div class="grand-total-value" id="totalAngsuranValue">Rp 0</div>
+        <div class="grand-total-label">Total Angsuran Masuk (sesuai filter)</div>
       </div>
-      <div class="form-group">
-        <label>Sisa Setelah Bayar</label>
-        <input id="angSisa" readonly style="background: #f3f4f6;">
-      </div>
-      <div class="form-group">
-        <label>Angsuran Ke-</label>
-        <select id="angKe">
-          <option value="">Pilih</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-          <option value="11">11</option>
-          <option value="12">12</option>
-        </select>
-      </div>
-      <input type="hidden" id="angId">
-      <button onclick="saveAngsuran()">Simpan Pembayaran</button>
       
       <div id="angList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
@@ -653,10 +714,26 @@ h3 { margin-top: 0; color: #1f2937; }
     <div id="saldo" class="card hidden">
       <h3>💳 Manajemen Saldo</h3>
       
-      <div class="stats-grid" style="margin-bottom: 20px;">
-        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-          <div class="stat-value" id="saldoTotal" style="color: white; font-size: 24px;">Rp 0</div>
-          <div class="stat-label" style="color: rgba(255,255,255,0.9);">Saldo Saat Ini</div>
+      <!-- Summary Box -->
+      <div class="summary-box">
+        <h4 style="margin-top: 0; margin-bottom: 16px; font-size: 16px;">📊 Ringkasan Transaksi Kas</h4>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-value" id="summaryDebet">Rp 0</div>
+            <div class="summary-label">Total Debet (Masuk)</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value" id="summaryKredit">Rp 0</div>
+            <div class="summary-label">Total Kredit (Keluar)</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value" id="summaryTransaksi">0</div>
+            <div class="summary-label">Jumlah Transaksi</div>
+          </div>
+          <div class="summary-item" style="background: rgba(255,255,255,0.2);">
+            <div class="summary-value" id="saldoTotal">Rp 0</div>
+            <div class="summary-label">Saldo Saat Ini</div>
+          </div>
         </div>
       </div>
       
@@ -807,6 +884,7 @@ var appData = {
 // Variabel untuk filter
 var filterPencairan = { nama: '', bulan: '', tanggal: '' };
 var filterIuran = { nama: '', bulan: '', tanggal: '' };
+var filterAngsuran = { nama: '', bulan: '', tanggal: '', minggu: '' };
 var filterLaporan = { nama: '', tanggal: '', minggu: '', bulan: '', tahun: '' };
 
 // ==========================================
@@ -1662,7 +1740,7 @@ function editPencairan(id) {
   var p = appData.pinjaman.find(function(x) { return x.id === id; });
   if (!p) return;
   
-  // Scroll ke form pengajuan untuk edit (simulasi)
+  // Buat form edit sederhana dengan prompt
   var newNominal = prompt('Edit Nominal Pinjaman:', p.nominal);
   if (newNominal === null) return;
   
@@ -1672,12 +1750,23 @@ function editPencairan(id) {
     return;
   }
   
+  // Edit tanggal pencairan
+  var newTanggal = prompt('Edit Tanggal Pencairan (YYYY-MM-DD):', p.tanggal || '');
+  if (newTanggal === null) return;
+  
+  // Validasi format tanggal
+  if (newTanggal && !/^\d{4}-\d{2}-\d{2}$/.test(newTanggal)) {
+    alert('Format tanggal tidak valid! Gunakan format YYYY-MM-DD');
+    return;
+  }
+  
   // Hitung ulang angsuran
   var newAngsuran = Math.ceil(newNominal / p.lama);
   
   if (isDemoMode) {
     p.nominal = newNominal;
     p.angsuran = newAngsuran;
+    p.tanggal = newTanggal || p.tanggal;
     // Adjust sisa if needed
     var totalAngsuran = appData.angsuran
       .filter(function(a) { return a.anggota === p.anggota; })
@@ -1692,6 +1781,7 @@ function editPencairan(id) {
   sbClient.from('pinjaman').update({ 
     nominal: newNominal, 
     angsuran: newAngsuran,
+    tanggal: newTanggal || p.tanggal,
     sisa: Math.max(0, newNominal - (p.nominal - p.sisa))
   }).eq('id', id).then(function() {
     loadFromSupabase().then(function() {
@@ -1741,28 +1831,229 @@ function deletePencairan(id) {
   });
 }
 
+// ==========================================
+// ANGSURAN DENGAN FILTER, EDIT, HAPUS, DAN TOTAL
+// ==========================================
 function renderAngsuran() {
-  var aktif = appData.pinjaman.filter(function(p) { return p.sisa > 0; });
-  var select = document.getElementById('angAnggota');
-  var options = '<option value="">Pilih Anggota</option>';
-  aktif.forEach(function(p) {
-    options += '<option value="' + p.anggota + '">' + p.anggota + ' (sisa: Rp ' + p.sisa.toLocaleString('id-ID') + ')</option>';
+  // Populate filter nama
+  var filterNama = document.getElementById('filterAngsuranNama');
+  var options = '<option value="">Semua Anggota</option>';
+  appData.anggota.forEach(function(a) {
+    options += '<option value="' + a.nama + '">' + a.nama + '</option>';
   });
-  select.innerHTML = options;
+  filterNama.innerHTML = options;
+  
+  applyFilterAngsuran();
+}
+
+function getMingguKe(date) {
+  var d = new Date(date);
+  var day = d.getDate();
+  if (day <= 7) return 1;
+  if (day <= 14) return 2;
+  if (day <= 21) return 3;
+  return 4;
+}
+
+function applyFilterAngsuran() {
+  filterAngsuran.nama = document.getElementById('filterAngsuranNama').value;
+  filterAngsuran.bulan = document.getElementById('filterAngsuranBulan').value;
+  filterAngsuran.tanggal = document.getElementById('filterAngsuranTanggal').value;
+  filterAngsuran.minggu = document.getElementById('filterAngsuranMinggu').value;
+  
+  var filtered = appData.angsuran.filter(function(a) {
+    var date = new Date(a.created_at);
+    
+    // Filter nama
+    if (filterAngsuran.nama && a.anggota !== filterAngsuran.nama) return false;
+    
+    // Filter bulan
+    if (filterAngsuran.bulan) {
+      var angsuranBulan = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+      if (angsuranBulan !== filterAngsuran.bulan) return false;
+    }
+    
+    // Filter tanggal spesifik
+    if (filterAngsuran.tanggal && a.created_at.split('T')[0] !== filterAngsuran.tanggal) return false;
+    
+    // Filter minggu
+    if (filterAngsuran.minggu && getMingguKe(date) != filterAngsuran.minggu) return false;
+    
+    return true;
+  });
+  
+  // Hitung total
+  var totalNominal = filtered.reduce(function(sum, a) { return sum + (a.nominal || 0); }, 0);
+  
+  // Tampilkan total
+  var totalContainer = document.getElementById('totalAngsuranContainer');
+  if (filtered.length > 0) {
+    totalContainer.classList.remove('hidden');
+    document.getElementById('totalAngsuranValue').textContent = 'Rp ' + totalNominal.toLocaleString('id-ID');
+  } else {
+    totalContainer.classList.add('hidden');
+  }
   
   var list = document.getElementById('angList');
-  if (!appData.angsuran.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💵</div><p>Belum ada pembayaran</p></div>';
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💵</div><p>Belum ada pembayaran yang sesuai filter</p></div>';
     return;
   }
   
-  var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Nominal</th><th>Ke-</th><th>Tanggal</th></tr></thead><tbody>';
-  var reversed = appData.angsuran.slice().reverse();
+  var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Nominal</th><th>Ke-</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody>';
+  var reversed = filtered.slice().reverse();
   reversed.forEach(function(a) {
-    html += '<tr><td>' + a.anggota + '</td><td>Rp ' + a.nominal.toLocaleString('id-ID') + '</td><td>' + a.ke + '</td><td>' + new Date(a.created_at).toLocaleDateString('id-ID') + '</td></tr>';
+    html += '<tr><td>' + a.anggota + '</td><td>Rp ' + a.nominal.toLocaleString('id-ID') + '</td><td>' + a.ke + '</td><td>' + new Date(a.created_at).toLocaleDateString('id-ID') + '</td><td>' +
+      '<button class="btn-small btn-warning" onclick="editAngsuran(\'' + a.id + '\')">Edit</button>' +
+      '<button class="btn-small btn-danger" onclick="deleteAngsuran(\'' + a.id + '\')">Hapus</button>' +
+      '</td></tr>';
   });
   html += '</tbody></table></div>';
   list.innerHTML = html;
+}
+
+function resetFilterAngsuran() {
+  document.getElementById('filterAngsuranNama').value = '';
+  document.getElementById('filterAngsuranBulan').value = '';
+  document.getElementById('filterAngsuranTanggal').value = '';
+  document.getElementById('filterAngsuranMinggu').value = '';
+  applyFilterAngsuran();
+}
+
+function editAngsuran(id) {
+  var a = appData.angsuran.find(function(x) { return x.id === id; });
+  if (!a) return;
+  
+  // Edit nominal
+  var newNominal = prompt('Edit Nominal Angsuran:', a.nominal);
+  if (newNominal === null) return;
+  
+  newNominal = parseInt(newNominal);
+  if (isNaN(newNominal) || newNominal <= 0) {
+    alert('Nominal tidak valid!');
+    return;
+  }
+  
+  // Edit angsuran ke-
+  var newKe = prompt('Edit Angsuran Ke-:', a.ke);
+  if (newKe === null) return;
+  
+  newKe = parseInt(newKe);
+  if (isNaN(newKe) || newKe <= 0) {
+    alert('Nomor angsuran tidak valid!');
+    return;
+  }
+  
+  // Edit tanggal
+  var newTanggal = prompt('Edit Tanggal (YYYY-MM-DD):', a.created_at.split('T')[0]);
+  if (newTanggal === null) return;
+  
+  if (newTanggal && !/^\d{4}-\d{2}-\d{2}$/.test(newTanggal)) {
+    alert('Format tanggal tidak valid! Gunakan format YYYY-MM-DD');
+    return;
+  }
+  
+  // Hitung selisih untuk update pinjaman
+  var selisih = newNominal - a.nominal;
+  
+  if (isDemoMode) {
+    // Update angsuran
+    a.nominal = newNominal;
+    a.ke = newKe;
+    a.created_at = newTanggal + 'T' + (a.created_at.split('T')[1] || '00:00:00.000Z');
+    
+    // Update pinjaman (sisa)
+    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota && x.sisa > 0; });
+    if (p) {
+      p.sisa = Math.max(0, p.sisa - selisih);
+    }
+    
+    // Update kas
+    var k = appData.kas.find(function(x) { 
+      return x.keterangan && x.keterangan.includes('Angsuran ' + a.anggota + ' ke-' + a.ke); 
+    });
+    if (k) {
+      k.nominal = newNominal;
+      k.created_at = a.created_at;
+    }
+    
+    saveDemoData();
+    applyFilterAngsuran();
+    updateDashboard();
+    return;
+  }
+  
+  showLoading(true);
+  sbClient.from('angsuran').update({ 
+    nominal: newNominal,
+    ke: newKe,
+    created_at: newTanggal + 'T00:00:00.000Z'
+  }).eq('id', id).then(function() {
+    // Update pinjaman
+    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota; });
+    if (p) {
+      return sbClient.from('pinjaman').update({ 
+        sisa: Math.max(0, p.sisa - selisih) 
+      }).eq('id', p.id);
+    }
+  }).then(function() {
+    return loadFromSupabase();
+  }).then(function() {
+    applyFilterAngsuran();
+    updateDashboard();
+    showLoading(false);
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    showLoading(false);
+  });
+}
+
+function deleteAngsuran(id) {
+  if (!confirm('Yakin hapus pembayaran angsuran ini?')) return;
+  
+  var a = appData.angsuran.find(function(x) { return x.id === id; });
+  if (!a) return;
+  
+  if (isDemoMode) {
+    // Kembalikan sisa pinjaman
+    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota; });
+    if (p) {
+      p.sisa += a.nominal;
+    }
+    
+    // Hapus angsuran
+    appData.angsuran = appData.angsuran.filter(function(x) { return x.id !== id; });
+    
+    // Hapus dari kas
+    appData.kas = appData.kas.filter(function(k) { 
+      return !(k.keterangan && k.keterangan.includes('Angsuran ' + a.anggota + ' ke-' + a.ke)); 
+    });
+    
+    saveDemoData();
+    applyFilterAngsuran();
+    updateDashboard();
+    return;
+  }
+  
+  showLoading(true);
+  sbClient.from('angsuran').delete().eq('id', id).then(function() {
+    // Kembalikan sisa pinjaman
+    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota; });
+    if (p) {
+      return sbClient.from('pinjaman').update({ 
+        sisa: p.sisa + a.nominal 
+      }).eq('id', p.id);
+    }
+  }).then(function() {
+    return loadFromSupabase();
+  }).then(function() {
+    applyFilterAngsuran();
+    updateDashboard();
+    showLoading(false);
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    showLoading(false);
+  });
 }
 
 // ==========================================
@@ -1877,14 +2168,28 @@ function deleteIuran(id) {
 }
 
 // ==========================================
-// SALDO MANAJEMEN
+// SALDO MANAJEMEN DENGAN RINGKASAN
 // ==========================================
 function renderSaldo() {
-  // Hitung total saldo
-  var totalSaldo = appData.kas.reduce(function(a, b) {
-    return a + (b.jenis === 'DEBET' ? b.nominal : -b.nominal);
-  }, 0);
+  // Hitung summary
+  var totalDebet = 0;
+  var totalKredit = 0;
   
+  appData.kas.forEach(function(k) {
+    if (k.jenis === 'DEBET') {
+      totalDebet += (k.nominal || 0);
+    } else {
+      totalKredit += (k.nominal || 0);
+    }
+  });
+  
+  var totalSaldo = totalDebet - totalKredit;
+  var totalTransaksi = appData.kas.length;
+  
+  // Update summary box
+  document.getElementById('summaryDebet').textContent = 'Rp ' + totalDebet.toLocaleString('id-ID');
+  document.getElementById('summaryKredit').textContent = 'Rp ' + totalKredit.toLocaleString('id-ID');
+  document.getElementById('summaryTransaksi').textContent = totalTransaksi;
   document.getElementById('saldoTotal').textContent = 'Rp ' + totalSaldo.toLocaleString('id-ID');
   
   // Set default tanggal hari ini
@@ -2057,15 +2362,6 @@ function renderLaporan() {
   filterNama.innerHTML = options;
   
   previewLaporan();
-}
-
-function getMingguKe(date) {
-  var d = new Date(date);
-  var day = d.getDate();
-  if (day <= 7) return 1;
-  if (day <= 14) return 2;
-  if (day <= 21) return 3;
-  return 4;
 }
 
 function previewLaporan() {
