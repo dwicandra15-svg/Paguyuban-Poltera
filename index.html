@@ -46,6 +46,10 @@ button:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
 .btn-danger:hover { background: #dc2626; }
 .btn-warning { background: #f59e0b; color: #000; }
 .btn-warning:hover { background: #d97706; }
+.btn-info { background: #3b82f6; }
+.btn-info:hover { background: #2563eb; }
+.btn-purple { background: #8b5cf6; }
+.btn-purple:hover { background: #7c3aed; }
 .btn-small { padding: 6px 12px; font-size: 12px; width: auto; margin: 2px; }
 
 .table-wrap { overflow-x: auto; margin-top: 12px; border-radius: 8px; border: 1px solid #e5e7eb; }
@@ -57,6 +61,8 @@ tbody tr:hover { background: #f9fafb; }
 .badge { padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; display: inline-block; }
 .badge-wait { background: #fef3c7; color: #92400e; }
 .badge-ok { background: #d1fae5; color: #065f46; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-info { background: #dbeafe; color: #1e40af; }
 
 .loading {
   position: fixed;
@@ -345,10 +351,130 @@ h3 { margin-top: 0; color: #1f2937; }
   margin-top: 8px;
 }
 
+/* Dashboard cards */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.dashboard-card {
+  color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
+
+.dashboard-card-title {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.dashboard-card-value {
+  font-size: 28px;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+}
+
+/* Pengembalian iuran styles */
+.refund-card {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.refund-info {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.refund-info-title {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.refund-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.refund-detail-item {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.refund-detail-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.refund-detail-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.refund-highlight {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.refund-highlight-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: #92400e;
+}
+
+.refund-highlight-label {
+  font-size: 14px;
+  color: #92400e;
+  margin-top: 8px;
+}
+
+/* Status anggota */
+.status-aktif { color: #059669; font-weight: 600; }
+.status-keluar { color: #dc2626; font-weight: 600; }
+
 @media(max-width: 640px) {
   .container { padding: 12px; }
   .login-box { margin: 20px; padding: 20px; }
   .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .refund-detail {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -454,6 +580,10 @@ h3 { margin-top: 0; color: #1f2937; }
         <span class="menu-icon">🔄</span>
         <span class="menu-text">Iuran Rutin</span>
       </div>
+      <div class="menu-item" onclick="navigate('pengembalian')">
+        <span class="menu-icon">💸</span>
+        <span class="menu-text">Pengembalian Iuran</span>
+      </div>
       <div class="menu-item" onclick="navigate('saldo')">
         <span class="menu-icon">💳</span>
         <span class="menu-text">Manajemen Saldo</span>
@@ -472,22 +602,30 @@ h3 { margin-top: 0; color: #1f2937; }
     <!-- DASHBOARD -->
     <div id="dashboard" class="card hidden">
       <h3>📊 Dashboard</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; border-radius: 12px;">
-          <div style="font-size: 14px; opacity: 0.9;">Saldo Kas</div>
-          <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashKas">Rp 0</div>
+      <div class="dashboard-grid">
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <div class="dashboard-card-title">Saldo Kas</div>
+          <div class="dashboard-card-value" id="dashKas">Rp 0</div>
         </div>
-        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; padding: 20px; border-radius: 12px;">
-          <div style="font-size: 14px; opacity: 0.9;">Total Piutang</div>
-          <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashPiutang">Rp 0</div>
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+          <div class="dashboard-card-title">Total Piutang</div>
+          <div class="dashboard-card-value" id="dashPiutang">Rp 0</div>
         </div>
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: #fff; padding: 20px; border-radius: 12px;">
-          <div style="font-size: 14px; opacity: 0.9;">Jumlah Anggota</div>
-          <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashAnggota">0</div>
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+          <div class="dashboard-card-title">Jumlah Anggota Aktif</div>
+          <div class="dashboard-card-value" id="dashAnggota">0</div>
         </div>
-        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #fff; padding: 20px; border-radius: 12px;">
-          <div style="font-size: 14px; opacity: 0.9;">Total Iuran Terkumpul</div>
-          <div style="font-size: 28px; font-weight: bold; margin-top: 4px;" id="dashTotalIuran">Rp 0</div>
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+          <div class="dashboard-card-title">Total Iuran Terkumpul</div>
+          <div class="dashboard-card-value" id="dashTotalIuran">Rp 0</div>
+        </div>
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+          <div class="dashboard-card-title">Total Angsuran Masuk</div>
+          <div class="dashboard-card-value" id="dashTotalAngsuran">Rp 0</div>
+        </div>
+        <div class="dashboard-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #374151;">
+          <div class="dashboard-card-title">Total Pengembalian Iuran</div>
+          <div class="dashboard-card-value" id="dashTotalPengembalian">Rp 0</div>
         </div>
       </div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 20px;">Kembali</button>
@@ -508,12 +646,12 @@ h3 { margin-top: 0; color: #1f2937; }
           <div class="stat-label">Anggota Aktif</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="statTotalIuran">Rp 0</div>
-          <div class="stat-label">Total Iuran</div>
+          <div class="stat-value" id="statAnggotaKeluar">0</div>
+          <div class="stat-label">Anggota Keluar</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" id="statTotalPinjaman">Rp 0</div>
-          <div class="stat-label">Total Pinjaman</div>
+          <div class="stat-value" id="statTotalIuran">Rp 0</div>
+          <div class="stat-label">Total Iuran Masuk</div>
         </div>
       </div>
       
@@ -528,7 +666,10 @@ h3 { margin-top: 0; color: #1f2937; }
         <div class="detail-card">
           <div class="detail-title" id="detailNamaAnggota">Detail Anggota</div>
           <div id="detailContent"></div>
-          <button onclick="downloadDetailPDF()" class="btn-success" style="margin-top: 12px;">📥 Download PDF</button>
+          <div class="flex gap-2" style="margin-top: 12px;">
+            <button onclick="downloadDetailPDF()" class="btn-success" style="flex: 1;">📥 Download PDF</button>
+            <button onclick="prosesPengembalianFromDetail()" class="btn-purple" style="flex: 1;">💸 Proses Pengembalian Iuran</button>
+          </div>
         </div>
       </div>
       
@@ -543,8 +684,22 @@ h3 { margin-top: 0; color: #1f2937; }
         <label>Tanggal Masuk</label>
         <input type="date" id="aggTanggal">
       </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="aggStatus">
+          <option value="AKTIF">Aktif</option>
+          <option value="KELUAR">Keluar</option>
+        </select>
+      </div>
+      <div class="form-group" id="aggKeluarContainer" style="display: none;">
+        <label>Tanggal Keluar</label>
+        <input type="date" id="aggTanggalKeluar">
+      </div>
       <input type="hidden" id="aggId">
-      <button onclick="saveAnggota()">Simpan</button>
+      <div class="flex gap-2">
+        <button onclick="saveAnggota()" style="flex: 1;">Simpan</button>
+        <button class="btn-secondary" onclick="resetAnggotaForm()" style="flex: 1;">Reset</button>
+      </div>
       
       <div id="aggList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
@@ -580,7 +735,10 @@ h3 { margin-top: 0; color: #1f2937; }
         </select>
       </div>
       <input type="hidden" id="pjId">
-      <button onclick="savePengajuan()">Simpan Pengajuan</button>
+      <div class="flex gap-2">
+        <button onclick="savePengajuan()" style="flex: 1;">Simpan Pengajuan</button>
+        <button class="btn-secondary" onclick="resetPengajuanForm()" style="flex: 1;">Reset</button>
+      </div>
       
       <div id="pjList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
@@ -609,7 +767,9 @@ h3 { margin-top: 0; color: #1f2937; }
             <input type="date" id="filterCairTanggal" onchange="applyFilterPencairan()">
           </div>
         </div>
-        <button class="btn-secondary" onclick="resetFilterPencairan()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        <div class="flex gap-2">
+          <button class="btn-secondary" onclick="resetFilterPencairan()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        </div>
       </div>
       
       <div id="cairList"></div>
@@ -649,13 +809,40 @@ h3 { margin-top: 0; color: #1f2937; }
             </select>
           </div>
         </div>
-        <button class="btn-secondary" onclick="resetFilterAngsuran()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        <div class="flex gap-2">
+          <button class="btn-secondary" onclick="resetFilterAngsuran()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        </div>
       </div>
       
       <!-- Total Angsuran -->
       <div id="totalAngsuranContainer" class="grand-total hidden">
         <div class="grand-total-value" id="totalAngsuranValue">Rp 0</div>
         <div class="grand-total-label">Total Angsuran Masuk (sesuai filter)</div>
+      </div>
+      
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+      
+      <h4>Tambah/Edit Angsuran</h4>
+      <div class="form-group">
+        <label>Nama Anggota</label>
+        <select id="angAnggota" onchange="calcSisa()"><option value="">Pilih Anggota</option></select>
+      </div>
+      <div class="form-group">
+        <label>Nominal Angsuran (Rp)</label>
+        <input type="number" id="angNominal" placeholder="0" oninput="calcSisa()">
+      </div>
+      <div class="form-group">
+        <label>Angsuran Ke-</label>
+        <input type="number" id="angKe" placeholder="1">
+      </div>
+      <div class="form-group">
+        <label>Sisa Setelah Bayar</label>
+        <input type="text" id="angSisa" readonly placeholder="Pilih anggota dan masukkan nominal">
+      </div>
+      <input type="hidden" id="angId">
+      <div class="flex gap-2">
+        <button onclick="saveAngsuran()" style="flex: 1;">Simpan Angsuran</button>
+        <button class="btn-secondary" onclick="resetAngsuranForm()" style="flex: 1;">Reset</button>
       </div>
       
       <div id="angList" class="mt-4"></div>
@@ -685,7 +872,9 @@ h3 { margin-top: 0; color: #1f2937; }
             <input type="date" id="filterIuranTanggal" onchange="applyFilterIuran()">
           </div>
         </div>
-        <button class="btn-secondary" onclick="resetFilterIuran()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        <div class="flex gap-2">
+          <button class="btn-secondary" onclick="resetFilterIuran()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        </div>
       </div>
       
       <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
@@ -704,9 +893,115 @@ h3 { margin-top: 0; color: #1f2937; }
         <input type="month" id="iurBulan">
       </div>
       <input type="hidden" id="iurId">
-      <button onclick="saveIuran()">Simpan Iuran</button>
+      <div class="flex gap-2">
+        <button onclick="saveIuran()" style="flex: 1;">Simpan Iuran</button>
+        <button class="btn-secondary" onclick="resetIuranForm()" style="flex: 1;">Reset</button>
+      </div>
       
       <div id="iurList" class="mt-4"></div>
+      <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
+    </div>
+    
+    <!-- PENGEMBALIAN IURAN -->
+    <div id="pengembalian" class="card hidden">
+      <h3>💸 Pengembalian Iuran (Anggota Keluar)</h3>
+      
+      <div class="refund-card">
+        <h4 style="margin-top: 0; font-size: 16px;">ℹ️ Informasi Pengembalian Iuran</h4>
+        <p style="margin: 8px 0; font-size: 13px; opacity: 0.95;">
+          Fitur ini digunakan untuk mengembalikan iuran kepada anggota yang berhenti/keluar dari paguyuban.
+          Perhitungan otomatis dari tanggal masuk sampai tanggal keluar.
+        </p>
+      </div>
+      
+      <!-- Filter Section -->
+      <div class="filter-section">
+        <h4 style="margin-top: 0; color: #0369a1; font-size: 14px;">🔍 Filter Pengembalian</h4>
+        <div class="filter-grid">
+          <div class="form-group">
+            <label>Nama Anggota</label>
+            <select id="filterRefundNama" onchange="applyFilterRefund()">
+              <option value="">Semua Anggota</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Bulan</label>
+            <input type="month" id="filterRefundBulan" onchange="applyFilterRefund()">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Spesifik</label>
+            <input type="date" id="filterRefundTanggal" onchange="applyFilterRefund()">
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-secondary" onclick="resetFilterRefund()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+        </div>
+      </div>
+      
+      <!-- Total Pengembalian -->
+      <div id="totalRefundContainer" class="refund-highlight hidden">
+        <div class="refund-highlight-value" id="totalRefundValue">Rp 0</div>
+        <div class="refund-highlight-label">Total Pengembalian Iuran (sesuai filter)</div>
+      </div>
+      
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+      
+      <h4>Proses Pengembalian Iuran</h4>
+      <div class="form-group">
+        <label>Pilih Anggota (Yang Sudah Keluar)</label>
+        <select id="refundAnggota" onchange="hitungRefundOtomatis()">
+          <option value="">Pilih Anggota</option>
+        </select>
+      </div>
+      
+      <!-- Info Perhitungan -->
+      <div id="refundInfoContainer" class="refund-info hidden">
+        <div class="refund-info-title">📊 Perhitungan Pengembalian Iuran</div>
+        <div class="refund-detail">
+          <div class="refund-detail-item">
+            <div class="refund-detail-label">Tanggal Masuk</div>
+            <div class="refund-detail-value" id="refundTanggalMasuk">-</div>
+          </div>
+          <div class="refund-detail-item">
+            <div class="refund-detail-label">Tanggal Keluar</div>
+            <div class="refund-detail-value" id="refundTanggalKeluar">-</div>
+          </div>
+          <div class="refund-detail-item">
+            <div class="refund-detail-label">Lama Keanggotaan</div>
+            <div class="refund-detail-value" id="refundLamaBulan">-</div>
+          </div>
+          <div class="refund-detail-item">
+            <div class="refund-detail-label">Total Iuran Masuk</div>
+            <div class="refund-detail-value" id="refundTotalIuranMasuk">Rp 0</div>
+          </div>
+        </div>
+        
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; text-align: center;">
+          <div style="font-size: 12px; color: #92400e; margin-bottom: 4px;">Total Pengembalian Iuran</div>
+          <div style="font-size: 28px; font-weight: bold; color: #92400e;" id="refundTotalDisplay">Rp 0</div>
+          <div style="font-size: 11px; color: #92400e; margin-top: 4px;">100% dari total iuran yang sudah masuk</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Nominal Pengembalian (Rp)</label>
+        <input type="number" id="refundNominal" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Tanggal Pengembalian</label>
+        <input type="date" id="refundTanggal">
+      </div>
+      <div class="form-group">
+        <label>Keterangan</label>
+        <input type="text" id="refundKeterangan" placeholder="Pengembalian iuran anggota keluar">
+      </div>
+      <input type="hidden" id="refundId">
+      <div class="flex gap-2">
+        <button onclick="saveRefund()" style="flex: 1;">💸 Proses Pengembalian</button>
+        <button class="btn-secondary" onclick="resetRefundForm()" style="flex: 1;">Reset</button>
+      </div>
+      
+      <div id="refundList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
     
@@ -807,8 +1102,10 @@ h3 { margin-top: 0; color: #1f2937; }
             </select>
           </div>
         </div>
-        <button class="btn-secondary" onclick="resetFilterLaporan()" style="width: auto; padding: 8px 16px; font-size: 12px; margin-right: 8px;">Reset Filter</button>
-        <button class="btn-success" onclick="downloadReport()" style="width: auto; padding: 8px 16px; font-size: 12px;">📥 Download PDF</button>
+        <div class="flex gap-2">
+          <button class="btn-secondary" onclick="resetFilterLaporan()" style="width: auto; padding: 8px 16px; font-size: 12px;">Reset Filter</button>
+          <button class="btn-success" onclick="downloadReport()" style="width: auto; padding: 8px 16px; font-size: 12px;">📥 Download PDF</button>
+        </div>
       </div>
       
       <!-- Preview Laporan -->
@@ -842,7 +1139,10 @@ h3 { margin-top: 0; color: #1f2937; }
         <input type="file" id="setLogo" accept="image/*" onchange="previewLogo(this)">
         <img id="logoPreview" style="max-width: 100px; margin-top: 10px; display: none;">
       </div>
-      <button onclick="saveSettings()">Simpan Pengaturan</button>
+      <div class="flex gap-2">
+        <button onclick="saveSettings()" style="flex: 1;">Simpan Pengaturan</button>
+        <button class="btn-secondary" onclick="resetSettingsForm()" style="flex: 1;">Reset</button>
+      </div>
       <button onclick="exportData()" class="btn-secondary" style="margin-top: 8px;">💾 Export Data (JSON)</button>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 8px;">Kembali</button>
     </div>
@@ -873,6 +1173,7 @@ var appData = {
   angsuran: [],
   iuran: [],
   kas: [],
+  refund: [], // Data pengembalian iuran
   settings: { 
     nama: 'Paguyuban Simpan Pinjam', 
     tagline: 'Tanpa Bunga • Kekeluargaan',
@@ -886,6 +1187,7 @@ var filterPencairan = { nama: '', bulan: '', tanggal: '' };
 var filterIuran = { nama: '', bulan: '', tanggal: '' };
 var filterAngsuran = { nama: '', bulan: '', tanggal: '', minggu: '' };
 var filterLaporan = { nama: '', tanggal: '', minggu: '', bulan: '', tahun: '' };
+var filterRefund = { nama: '', bulan: '', tanggal: '' };
 
 // ==========================================
 // INISIALISASI
@@ -904,6 +1206,18 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Populate tahun filter
   populateTahunFilter();
+  
+  // Setup event listener untuk status anggota
+  document.getElementById('aggStatus').addEventListener('change', function() {
+    var container = document.getElementById('aggKeluarContainer');
+    if (this.value === 'KELUAR') {
+      container.style.display = 'block';
+      document.getElementById('aggTanggalKeluar').value = new Date().toISOString().split('T')[0];
+    } else {
+      container.style.display = 'none';
+      document.getElementById('aggTanggalKeluar').value = '';
+    }
+  });
   
   initSupabase();
   setTimeout(checkConnection, 1000);
@@ -1135,7 +1449,7 @@ function doLogout() {
   
   appData = {
     anggota: [], pengajuan: [], pinjaman: [],
-    angsuran: [], iuran: [], kas: [],
+    angsuran: [], iuran: [], kas: [], refund: [],
     settings: { 
       nama: 'Paguyuban Simpan Pinjam', 
       tagline: 'Tanpa Bunga • Kekeluargaan',
@@ -1158,6 +1472,7 @@ async function loadFromSupabase() {
       sbClient.from('angsuran').select('*'),
       sbClient.from('iuran').select('*'),
       sbClient.from('kas').select('*'),
+      sbClient.from('refund').select('*'), // Load pengembalian iuran
       sbClient.from('setting').select('*').eq('key', 'app').single()
     ]);
     
@@ -1167,9 +1482,10 @@ async function loadFromSupabase() {
     appData.angsuran = results[3].data || [];
     appData.iuran = results[4].data || [];
     appData.kas = results[5].data || [];
+    appData.refund = results[6].data || [];
     
-    if (results[6].data && results[6].data.value) {
-      Object.assign(appData.settings, results[6].data.value);
+    if (results[7].data && results[7].data.value) {
+      Object.assign(appData.settings, results[7].data.value);
       localStorage.setItem('paguyuban_settings', JSON.stringify(appData.settings));
       updateHeaderSettings();
     }
@@ -1222,11 +1538,11 @@ function getTotalIuranAnggota(namaAnggota) {
 // HELPER: HITUNG LAMA KEANGGOTAAN (INKLUSIF)
 // Bulan bergabung dihitung sebagai bulan ke-1
 // ==========================================
-function hitungLamaBulan(masukDate) {
+function hitungLamaBulan(masukDate, keluarDate) {
   if (!masukDate) return { text: '-', bulan: 0, sudahSatuBulan: false };
   
   var masuk = new Date(masukDate);
-  var today = new Date();
+  var today = keluarDate ? new Date(keluarDate) : new Date();
   
   // Reset time to compare dates only
   masuk.setHours(0, 0, 0, 0);
@@ -1296,10 +1612,27 @@ function updateDashboard() {
     return a + (b.nominal || 0);
   }, 0);
   
+  // Hitung total angsuran masuk
+  var totalAngsuran = appData.angsuran.reduce(function(a, b) {
+    return a + (b.nominal || 0);
+  }, 0);
+  
+  // Hitung total pengembalian iuran
+  var totalPengembalian = appData.refund.reduce(function(a, b) {
+    return a + (b.nominal || 0);
+  }, 0);
+  
+  // Hitung anggota aktif (yang statusnya tidak KELUAR)
+  var anggotaAktif = appData.anggota.filter(function(a) {
+    return a.status !== 'KELUAR';
+  }).length;
+  
   document.getElementById('dashKas').textContent = 'Rp ' + kas.toLocaleString('id-ID');
   document.getElementById('dashPiutang').textContent = 'Rp ' + piutang.toLocaleString('id-ID');
-  document.getElementById('dashAnggota').textContent = appData.anggota.length;
+  document.getElementById('dashAnggota').textContent = anggotaAktif;
   document.getElementById('dashTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
+  document.getElementById('dashTotalAngsuran').textContent = 'Rp ' + totalAngsuran.toLocaleString('id-ID');
+  document.getElementById('dashTotalPengembalian').textContent = 'Rp ' + totalPengembalian.toLocaleString('id-ID');
 }
 
 function renderPage(page) {
@@ -1310,6 +1643,7 @@ function renderPage(page) {
   else if (page === 'pencairan') renderPencairan();
   else if (page === 'angsuran') renderAngsuran();
   else if (page === 'iuran') renderIuran();
+  else if (page === 'pengembalian') renderRefund();
   else if (page === 'saldo') renderSaldo();
   else if (page === 'pengaturan') renderSettings();
   else if (page === 'laporan') renderLaporan();
@@ -1318,14 +1652,14 @@ function renderPage(page) {
 function renderAnggota() {
   // Update statistik
   var totalAnggota = appData.anggota.length;
-  var anggotaAktif = appData.pinjaman.filter(function(p) { return p.sisa > 0; }).length;
+  var anggotaAktif = appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).length;
+  var anggotaKeluar = appData.anggota.filter(function(a) { return a.status === 'KELUAR'; }).length;
   var totalIuran = appData.iuran.reduce(function(a, b) { return a + (b.nominal || 0); }, 0);
-  var totalPinjaman = appData.pinjaman.reduce(function(a, b) { return a + b.nominal; }, 0);
   
   document.getElementById('statTotalAnggota').textContent = totalAnggota;
   document.getElementById('statAnggotaAktif').textContent = anggotaAktif;
+  document.getElementById('statAnggotaKeluar').textContent = anggotaKeluar;
   document.getElementById('statTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
-  document.getElementById('statTotalPinjaman').textContent = 'Rp ' + totalPinjaman.toLocaleString('id-ID');
   
   var list = document.getElementById('aggList');
   if (!appData.anggota.length) {
@@ -1333,24 +1667,32 @@ function renderAnggota() {
     return;
   }
   
-  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Masuk</th><th>Lama</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
+  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Masuk</th><th>Status</th><th>Lama</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
   
   appData.anggota.forEach(function(a) {
     var tgl = a.masuk ? new Date(a.masuk).toLocaleDateString('id-ID') : '-';
     
     // Gunakan fungsi hitungLamaBulan yang baru (INKLUSIF)
-    var lamaInfo = hitungLamaBulan(a.masuk);
+    var lamaInfo = hitungLamaBulan(a.masuk, a.tanggal_keluar);
     var lamaText = lamaInfo.text;
     
     // Hitung total iuran untuk anggota ini
-    var totalIuran = getTotalIuranAnggota(a.nama);
+    var totalIuranAnggota = getTotalIuranAnggota(a.nama);
     
-    // Tambahkan indikator jika sudah wajib iuran
-    var wajibIuran = lamaInfo.sudahSatuBulan ? '<span class="badge badge-ok" style="margin-left: 4px;">Wajib Iuran</span>' : '<span class="badge badge-wait" style="margin-left: 4px;">Gratis</span>';
+    // Status badge
+    var statusBadge = '';
+    if (a.status === 'KELUAR') {
+      statusBadge = '<span class="badge badge-danger">KELUAR</span>';
+    } else {
+      // Tambahkan indikator jika sudah wajib iuran
+      var wajibIuran = lamaInfo.sudahSatuBulan ? '<span class="badge badge-ok" style="margin-left: 4px;">Wajib Iuran</span>' : '<span class="badge badge-wait" style="margin-left: 4px;">Gratis</span>';
+      statusBadge = '<span class="badge badge-ok">AKTIF</span>' + wajibIuran;
+    }
     
-    html += '<tr><td><strong>' + a.nama + '</strong></td><td>' + tgl + '</td><td>' + lamaText + wajibIuran + '</td><td><span class="total-iuran">Rp ' + totalIuran.toLocaleString('id-ID') + '</span></td><td>' +
+    html += '<tr><td><strong>' + a.nama + '</strong></td><td>' + tgl + '</td><td>' + statusBadge + '</td><td>' + lamaText + '</td><td><span class="total-iuran">Rp ' + totalIuranAnggota.toLocaleString('id-ID') + '</span></td><td>' +
       '<button class="btn-small btn-warning" onclick="editAnggota(\'' + a.id + '\')">Edit</button>' +
       '<button class="btn-small btn-danger" onclick="deleteAnggota(\'' + a.id + '\')">Hapus</button>' +
+      (a.status !== 'KELUAR' ? '<button class="btn-small btn-purple" onclick="setAnggotaKeluar(\'' + a.id + '\')">Set Keluar</button>' : '') +
       '</td></tr>';
   });
   
@@ -1415,16 +1757,25 @@ function showDetailAnggota(anggota) {
     return p.anggota === anggota.nama;
   });
   
+  // Cek apakah sudah ada pengembalian iuran
+  var refundData = appData.refund.find(function(r) { return r.anggota === anggota.nama; });
+  var sudahRefund = !!refundData;
+  
   // Format tanggal bergabung
   var tglBergabung = anggota.masuk ? 
     new Date(anggota.masuk).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 
     'Tidak tercatat';
   
   // Info lama keanggotaan dengan sistem INKLUSIF
-  var lamaInfo = hitungLamaBulan(anggota.masuk);
+  var lamaInfo = hitungLamaBulan(anggota.masuk, anggota.tanggal_keluar);
   var statusIuran = lamaInfo.sudahSatuBulan ? 
     '<span class="badge badge-ok">Sudah Wajib Iuran</span>' : 
     '<span class="badge badge-wait">Belum Wajib Iuran (Gratis)</span>';
+  
+  // Status anggota
+  var statusAnggota = anggota.status === 'KELUAR' ? 
+    '<span class="badge badge-danger">KELUAR</span>' : 
+    '<span class="badge badge-ok">AKTIF</span>';
   
   var html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">';
   html += '<div class="stat-card"><div class="stat-value" style="color: #059669;">Rp ' + totalIuran.toLocaleString('id-ID') + '</div><div class="stat-label">Total Iuran</div></div>';
@@ -1434,8 +1785,19 @@ function showDetailAnggota(anggota) {
   html += '</div>';
   
   html += '<div class="detail-content">';
+  html += '<p><strong>Status:</strong> ' + statusAnggota + '</p>';
   html += '<p><strong>📅 Bergabung:</strong> ' + tglBergabung + '</p>';
+  if (anggota.status === 'KELUAR' && anggota.tanggal_keluar) {
+    html += '<p><strong>📅 Keluar:</strong> ' + new Date(anggota.tanggal_keluar).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + '</p>';
+  }
   html += '<p><strong>⏱️ Lama:</strong> ' + lamaInfo.text + ' ' + statusIuran + '</p>';
+  
+  if (sudahRefund) {
+    html += '<div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 12px; margin: 12px 0;">';
+    html += '<strong>💸 Sudah Diproses Pengembalian Iuran:</strong> Rp ' + refundData.nominal.toLocaleString('id-ID');
+    html += '<br><small>Tanggal: ' + new Date(refundData.tanggal).toLocaleDateString('id-ID') + '</small>';
+    html += '</div>';
+  }
   
   // Riwayat Pinjaman
   html += '<h4 style="margin-top: 16px; color: #374151;">📋 Riwayat Pinjaman</h4>';
@@ -1489,6 +1851,28 @@ function showDetailAnggota(anggota) {
   document.getElementById('detailContent').innerHTML = html;
 }
 
+function prosesPengembalianFromDetail() {
+  if (!currentDetailAnggota) {
+    alert('Pilih anggota terlebih dahulu');
+    return;
+  }
+  
+  if (currentDetailAnggota.status !== 'KELUAR') {
+    if (!confirm('Anggota ini masih aktif. Apakah Anda yakin ingin memproses pengembalian iuran? Anggota akan otomatis di-set sebagai KELUAR.')) {
+      return;
+    }
+    // Set status ke KELUAR
+    currentDetailAnggota.status = 'KELUAR';
+    currentDetailAnggota.tanggal_keluar = new Date().toISOString().split('T')[0];
+  }
+  
+  navigate('pengembalian');
+  setTimeout(function() {
+    document.getElementById('refundAnggota').value = currentDetailAnggota.nama;
+    hitungRefundOtomatis();
+  }, 100);
+}
+
 function downloadDetailPDF() {
   if (!currentDetailAnggota) {
     alert('Pilih anggota terlebih dahulu');
@@ -1539,11 +1923,17 @@ function downloadDetailPDF() {
   doc.setFont(undefined, 'normal');
   doc.text('Nama: ' + anggota.nama, margin, yPos);
   yPos += 6;
+  doc.text('Status: ' + (anggota.status || 'AKTIF'), margin, yPos);
+  yPos += 6;
   doc.text('Tanggal Bergabung: ' + (anggota.masuk ? new Date(anggota.masuk).toLocaleDateString('id-ID') : '-'), margin, yPos);
   yPos += 6;
+  if (anggota.status === 'KELUAR' && anggota.tanggal_keluar) {
+    doc.text('Tanggal Keluar: ' + new Date(anggota.tanggal_keluar).toLocaleDateString('id-ID'), margin, yPos);
+    yPos += 6;
+  }
   
   // Gunakan fungsi hitungLamaBulan yang baru
-  var lamaInfo = hitungLamaBulan(anggota.masuk);
+  var lamaInfo = hitungLamaBulan(anggota.masuk, anggota.tanggal_keluar);
   doc.text('Lama Keanggotaan: ' + lamaInfo.text, margin, yPos);
   yPos += 10;
   
@@ -1561,6 +1951,13 @@ function downloadDetailPDF() {
   yPos += 6;
   doc.text('Sisa Hutang: Rp ' + sisaHutang.toLocaleString('id-ID'), margin, yPos);
   yPos += 10;
+  
+  // Cek pengembalian
+  var refundData = appData.refund.find(function(r) { return r.anggota === anggota.nama; });
+  if (refundData) {
+    doc.text('Pengembalian Iuran: Rp ' + refundData.nominal.toLocaleString('id-ID'), margin, yPos);
+    yPos += 10;
+  }
   
   // Riwayat Pinjaman
   doc.setFontSize(12);
@@ -1651,7 +2048,8 @@ function downloadDetailPDF() {
 function renderPengajuan() {
   var select = document.getElementById('pjAnggota');
   var options = '<option value="">Pilih Anggota</option>';
-  appData.anggota.forEach(function(a) {
+  // Hanya tampilkan anggota aktif
+  appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).forEach(function(a) {
     options += '<option value="' + a.nama + '">' + a.nama + '</option>';
   });
   select.innerHTML = options;
@@ -1668,6 +2066,7 @@ function renderPengajuan() {
   pending.forEach(function(p) {
     html += '<tr><td>' + p.anggota + '</td><td>Rp ' + p.nominal.toLocaleString('id-ID') + '</td><td>' + p.lama + ' bln</td><td>' +
       '<button class="btn-small btn-success" onclick="cairkan(\'' + p.id + '\')">Cairkan</button>' +
+      '<button class="btn-small btn-warning" onclick="editPengajuan(\'' + p.id + '\')">Edit</button>' +
       '<button class="btn-small btn-danger" onclick="hapusPengajuan(\'' + p.id + '\')">Hapus</button>' +
       '</td></tr>';
   });
@@ -1835,13 +2234,19 @@ function deletePencairan(id) {
 // ANGSURAN DENGAN FILTER, EDIT, HAPUS, DAN TOTAL
 // ==========================================
 function renderAngsuran() {
-  // Populate filter nama
+  // Populate filter nama dan select angsuran
   var filterNama = document.getElementById('filterAngsuranNama');
-  var options = '<option value="">Semua Anggota</option>';
+  var angAnggota = document.getElementById('angAnggota');
+  var options = '<option value="">Pilih Anggota</option>';
+  var filterOptions = '<option value="">Semua Anggota</option>';
+  
   appData.anggota.forEach(function(a) {
     options += '<option value="' + a.nama + '">' + a.nama + '</option>';
+    filterOptions += '<option value="' + a.nama + '">' + a.nama + '</option>';
   });
-  filterNama.innerHTML = options;
+  
+  angAnggota.innerHTML = options;
+  filterNama.innerHTML = filterOptions;
   
   applyFilterAngsuran();
 }
@@ -1924,88 +2329,15 @@ function editAngsuran(id) {
   var a = appData.angsuran.find(function(x) { return x.id === id; });
   if (!a) return;
   
-  // Edit nominal
-  var newNominal = prompt('Edit Nominal Angsuran:', a.nominal);
-  if (newNominal === null) return;
+  document.getElementById('angAnggota').value = a.anggota;
+  document.getElementById('angNominal').value = a.nominal;
+  document.getElementById('angKe').value = a.ke;
+  document.getElementById('angId').value = id;
   
-  newNominal = parseInt(newNominal);
-  if (isNaN(newNominal) || newNominal <= 0) {
-    alert('Nominal tidak valid!');
-    return;
-  }
+  calcSisa();
   
-  // Edit angsuran ke-
-  var newKe = prompt('Edit Angsuran Ke-:', a.ke);
-  if (newKe === null) return;
-  
-  newKe = parseInt(newKe);
-  if (isNaN(newKe) || newKe <= 0) {
-    alert('Nomor angsuran tidak valid!');
-    return;
-  }
-  
-  // Edit tanggal
-  var newTanggal = prompt('Edit Tanggal (YYYY-MM-DD):', a.created_at.split('T')[0]);
-  if (newTanggal === null) return;
-  
-  if (newTanggal && !/^\d{4}-\d{2}-\d{2}$/.test(newTanggal)) {
-    alert('Format tanggal tidak valid! Gunakan format YYYY-MM-DD');
-    return;
-  }
-  
-  // Hitung selisih untuk update pinjaman
-  var selisih = newNominal - a.nominal;
-  
-  if (isDemoMode) {
-    // Update angsuran
-    a.nominal = newNominal;
-    a.ke = newKe;
-    a.created_at = newTanggal + 'T' + (a.created_at.split('T')[1] || '00:00:00.000Z');
-    
-    // Update pinjaman (sisa)
-    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota && x.sisa > 0; });
-    if (p) {
-      p.sisa = Math.max(0, p.sisa - selisih);
-    }
-    
-    // Update kas
-    var k = appData.kas.find(function(x) { 
-      return x.keterangan && x.keterangan.includes('Angsuran ' + a.anggota + ' ke-' + a.ke); 
-    });
-    if (k) {
-      k.nominal = newNominal;
-      k.created_at = a.created_at;
-    }
-    
-    saveDemoData();
-    applyFilterAngsuran();
-    updateDashboard();
-    return;
-  }
-  
-  showLoading(true);
-  sbClient.from('angsuran').update({ 
-    nominal: newNominal,
-    ke: newKe,
-    created_at: newTanggal + 'T00:00:00.000Z'
-  }).eq('id', id).then(function() {
-    // Update pinjaman
-    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota; });
-    if (p) {
-      return sbClient.from('pinjaman').update({ 
-        sisa: Math.max(0, p.sisa - selisih) 
-      }).eq('id', p.id);
-    }
-  }).then(function() {
-    return loadFromSupabase();
-  }).then(function() {
-    applyFilterAngsuran();
-    updateDashboard();
-    showLoading(false);
-  }).catch(function(e) {
-    alert('Error: ' + e.message);
-    showLoading(false);
-  });
+  // Scroll ke form
+  document.getElementById('angAnggota').scrollIntoView({ behavior: 'smooth' });
 }
 
 function deleteAngsuran(id) {
@@ -2159,6 +2491,321 @@ function deleteIuran(id) {
     return loadFromSupabase();
   }).then(function() {
     applyFilterIuran();
+    updateDashboard();
+    showLoading(false);
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    showLoading(false);
+  });
+}
+
+// ==========================================
+// PENGEMBALIAN IURAN (REFUND)
+// ==========================================
+function renderRefund() {
+  // Populate filter nama dan select refund
+  var filterNama = document.getElementById('filterRefundNama');
+  var refundAnggota = document.getElementById('refundAnggota');
+  
+  var options = '<option value="">Pilih Anggota</option>';
+  var filterOptions = '<option value="">Semua Anggota</option>';
+  
+  // Tampilkan semua anggota untuk filter, tapi hanya yang keluar untuk select
+  appData.anggota.forEach(function(a) {
+    filterOptions += '<option value="' + a.nama + '">' + a.nama + '</option>';
+    if (a.status === 'KELUAR') {
+      options += '<option value="' + a.nama + '">' + a.nama + ' (Keluar: ' + (a.tanggal_keluar ? new Date(a.tanggal_keluar).toLocaleDateString('id-ID') : '-') + ')</option>';
+    }
+  });
+  
+  refundAnggota.innerHTML = options;
+  filterNama.innerHTML = filterOptions;
+  
+  // Set default tanggal hari ini
+  if (!document.getElementById('refundTanggal').value) {
+    document.getElementById('refundTanggal').value = new Date().toISOString().split('T')[0];
+  }
+  
+  applyFilterRefund();
+}
+
+function hitungRefundOtomatis() {
+  var nama = document.getElementById('refundAnggota').value;
+  var infoContainer = document.getElementById('refundInfoContainer');
+  
+  if (!nama) {
+    infoContainer.classList.add('hidden');
+    document.getElementById('refundNominal').value = '';
+    return;
+  }
+  
+  var anggota = appData.anggota.find(function(a) { return a.nama === nama; });
+  if (!anggota) {
+    infoContainer.classList.add('hidden');
+    return;
+  }
+  
+  // Jika status belum keluar, set otomatis
+  if (anggota.status !== 'KELUAR') {
+    anggota.status = 'KELUAR';
+    anggota.tanggal_keluar = new Date().toISOString().split('T')[0];
+  }
+  
+  // Hitung total iuran yang sudah masuk
+  var totalIuran = getTotalIuranAnggota(nama);
+  
+  // Hitung lama keanggotaan
+  var lamaInfo = hitungLamaBulan(anggota.masuk, anggota.tanggal_keluar);
+  
+  // Tampilkan info
+  infoContainer.classList.remove('hidden');
+  document.getElementById('refundTanggalMasuk').textContent = anggota.masuk ? new Date(anggota.masuk).toLocaleDateString('id-ID') : '-';
+  document.getElementById('refundTanggalKeluar').textContent = anggota.tanggal_keluar ? new Date(anggota.tanggal_keluar).toLocaleDateString('id-ID') : '-';
+  document.getElementById('refundLamaBulan').textContent = lamaInfo.text + ' (' + lamaInfo.bulan + ' bulan)';
+  document.getElementById('refundTotalIuranMasuk').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
+  document.getElementById('refundTotalDisplay').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
+  
+  // Set nominal refund
+  document.getElementById('refundNominal').value = totalIuran;
+  document.getElementById('refundKeterangan').value = 'Pengembalian iuran ' + nama + ' (' + lamaInfo.text + ')';
+}
+
+function applyFilterRefund() {
+  filterRefund.nama = document.getElementById('filterRefundNama').value;
+  filterRefund.bulan = document.getElementById('filterRefundBulan').value;
+  filterRefund.tanggal = document.getElementById('filterRefundTanggal').value;
+  
+  var filtered = appData.refund.filter(function(r) {
+    // Filter nama
+    if (filterRefund.nama && r.anggota !== filterRefund.nama) return false;
+    
+    // Filter bulan
+    if (filterRefund.bulan && r.tanggal) {
+      var refundBulan = r.tanggal.substring(0, 7);
+      if (refundBulan !== filterRefund.bulan) return false;
+    }
+    
+    // Filter tanggal spesifik
+    if (filterRefund.tanggal && r.tanggal !== filterRefund.tanggal) return false;
+    
+    return true;
+  });
+  
+  // Hitung total
+  var totalNominal = filtered.reduce(function(sum, r) { return sum + (r.nominal || 0); }, 0);
+  
+  // Tampilkan total
+  var totalContainer = document.getElementById('totalRefundContainer');
+  if (filtered.length > 0) {
+    totalContainer.classList.remove('hidden');
+    document.getElementById('totalRefundValue').textContent = 'Rp ' + totalNominal.toLocaleString('id-ID');
+  } else {
+    totalContainer.classList.add('hidden');
+  }
+  
+  var list = document.getElementById('refundList');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💸</div><p>Belum ada pengembalian iuran</p></div>';
+    return;
+  }
+  
+  var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Nominal</th><th>Tanggal</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody>';
+  var reversed = filtered.slice().reverse();
+  reversed.forEach(function(r) {
+    var tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString('id-ID') : '-';
+    html += '<tr><td>' + r.anggota + '</td><td><strong>Rp ' + r.nominal.toLocaleString('id-ID') + '</strong></td><td>' + tgl + '</td><td>' + (r.keterangan || '-') + '</td><td>' +
+      '<button class="btn-small btn-warning" onclick="editRefund(\'' + r.id + '\')">Edit</button>' +
+      '<button class="btn-small btn-danger" onclick="deleteRefund(\'' + r.id + '\')">Hapus</button>' +
+      '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  list.innerHTML = html;
+}
+
+function resetFilterRefund() {
+  document.getElementById('filterRefundNama').value = '';
+  document.getElementById('filterRefundBulan').value = '';
+  document.getElementById('filterRefundTanggal').value = '';
+  applyFilterRefund();
+}
+
+function saveRefund() {
+  var anggota = document.getElementById('refundAnggota').value;
+  var nominal = parseInt(document.getElementById('refundNominal').value);
+  var tanggal = document.getElementById('refundTanggal').value;
+  var keterangan = document.getElementById('refundKeterangan').value.trim();
+  var id = document.getElementById('refundId').value;
+  
+  if (!anggota) { alert('Pilih anggota yang akan diproses!'); return; }
+  if (!nominal || nominal <= 0) { alert('Nominal pengembalian harus lebih dari 0!'); return; }
+  if (!tanggal) { alert('Tanggal pengembalian wajib diisi!'); return; }
+  
+  // Cek apakah anggota sudah ada refund sebelumnya (hanya untuk tambah baru)
+  if (!id) {
+    var existingRefund = appData.refund.find(function(r) { return r.anggota === anggota; });
+    if (existingRefund) {
+      if (!confirm('Anggota ini sudah pernah diproses pengembalian iuran sebelumnya. Apakah Anda yakin ingin menambahkan pengembalian lagi?')) {
+        return;
+      }
+    }
+  }
+  
+  if (isDemoMode) {
+    if (id) {
+      // Edit mode
+      var idx = appData.refund.findIndex(function(r) { return r.id === id; });
+      if (idx >= 0) {
+        var oldNominal = appData.refund[idx].nominal;
+        appData.refund[idx].anggota = anggota;
+        appData.refund[idx].nominal = nominal;
+        appData.refund[idx].tanggal = tanggal;
+        appData.refund[idx].keterangan = keterangan;
+        
+        // Update kas (kurangi selisih)
+        var selisih = nominal - oldNominal;
+        var k = appData.kas.find(function(x) { 
+          return x.keterangan && x.keterangan.includes('Pengembalian iuran ' + anggota); 
+        });
+        if (k) {
+          k.nominal = nominal;
+          k.tanggal = tanggal;
+          k.created_at = tanggal + 'T00:00:00.000Z';
+        }
+      }
+    } else {
+      // Add new
+      appData.refund.push({
+        id: 'demo_' + Date.now(),
+        anggota: anggota,
+        nominal: nominal,
+        tanggal: tanggal,
+        keterangan: keterangan,
+        created_at: new Date().toISOString()
+      });
+      
+      // Update status anggota menjadi KELUAR jika belum
+      var a = appData.anggota.find(function(x) { return x.nama === anggota; });
+      if (a && a.status !== 'KELUAR') {
+        a.status = 'KELUAR';
+        a.tanggal_keluar = tanggal;
+      }
+      
+      // Tambah ke kas sebagai KREDIT (keluar)
+      appData.kas.push({
+        id: 'demo_' + Date.now(),
+        jenis: 'KREDIT',
+        nominal: nominal,
+        keterangan: 'Pengembalian iuran ' + anggota,
+        tanggal: tanggal,
+        created_at: tanggal + 'T00:00:00.000Z'
+      });
+    }
+    saveDemoData();
+    resetRefundForm();
+    applyFilterRefund();
+    updateDashboard();
+    alert('Pengembalian iuran berhasil diproses!');
+    return;
+  }
+  
+  showLoading(true);
+  
+  var savePromise;
+  if (id) {
+    savePromise = sbClient.from('refund').update({
+      anggota: anggota,
+      nominal: nominal,
+      tanggal: tanggal,
+      keterangan: keterangan
+    }).eq('id', id);
+  } else {
+    savePromise = sbClient.from('refund').insert([{
+      anggota: anggota,
+      nominal: nominal,
+      tanggal: tanggal,
+      keterangan: keterangan
+    }]);
+  }
+  
+  savePromise.then(function() {
+    // Update status anggota
+    return sbClient.from('anggota').update({
+      status: 'KELUAR',
+      tanggal_keluar: tanggal
+    }).eq('nama', anggota);
+  }).then(function() {
+    // Update kas
+    if (id) {
+      return sbClient.from('kas').update({
+        nominal: nominal,
+        tanggal: tanggal,
+        created_at: tanggal + 'T00:00:00.000Z'
+      }).eq('keterangan', 'Pengembalian iuran ' + anggota);
+    } else {
+      return sbClient.from('kas').insert([{
+        jenis: 'KREDIT',
+        nominal: nominal,
+        keterangan: 'Pengembalian iuran ' + anggota,
+        tanggal: tanggal
+      }]);
+    }
+  }).then(function() {
+    return loadFromSupabase();
+  }).then(function() {
+    resetRefundForm();
+    applyFilterRefund();
+    updateDashboard();
+    showLoading(false);
+    alert('Pengembalian iuran berhasil diproses!');
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    showLoading(false);
+  });
+}
+
+function editRefund(id) {
+  var r = appData.refund.find(function(x) { return x.id === id; });
+  if (!r) return;
+  
+  document.getElementById('refundAnggota').value = r.anggota;
+  document.getElementById('refundNominal').value = r.nominal;
+  document.getElementById('refundTanggal').value = r.tanggal;
+  document.getElementById('refundKeterangan').value = r.keterangan || '';
+  document.getElementById('refundId').value = id;
+  
+  // Tampilkan info
+  hitungRefundOtomatis();
+  
+  // Scroll ke form
+  document.getElementById('refundAnggota').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteRefund(id) {
+  if (!confirm('Yakin hapus data pengembalian iuran ini?')) return;
+  
+  var r = appData.refund.find(function(x) { return x.id === id; });
+  if (!r) return;
+  
+  if (isDemoMode) {
+    appData.refund = appData.refund.filter(function(x) { return x.id !== id; });
+    // Hapus dari kas
+    appData.kas = appData.kas.filter(function(k) { 
+      return !(k.keterangan && k.keterangan.includes('Pengembalian iuran ' + r.anggota)); 
+    });
+    saveDemoData();
+    applyFilterRefund();
+    updateDashboard();
+    return;
+  }
+  
+  showLoading(true);
+  sbClient.from('refund').delete().eq('id', id).then(function() {
+    // Hapus dari kas
+    return sbClient.from('kas').delete().eq('keterangan', 'Pengembalian iuran ' + r.anggota);
+  }).then(function() {
+    return loadFromSupabase();
+  }).then(function() {
+    applyFilterRefund();
     updateDashboard();
     showLoading(false);
   }).catch(function(e) {
@@ -2447,6 +3094,32 @@ function previewLaporan() {
     }
   });
   
+  // 4. Pengembalian Iuran
+  appData.refund.forEach(function(r) {
+    var date = new Date(r.tanggal);
+    var include = true;
+    
+    if (filterLaporan.nama && r.anggota !== filterLaporan.nama) include = false;
+    if (filterLaporan.tanggal && r.tanggal !== filterLaporan.tanggal) include = false;
+    if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
+    if (filterLaporan.bulan) {
+      var refundBulan = r.tanggal.substring(0, 7);
+      if (refundBulan !== filterLaporan.bulan) include = false;
+    }
+    if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
+    
+    if (include) {
+      allTransaksi.push({
+        tanggal: r.tanggal + 'T00:00:00.000Z',
+        jenis: 'PENGEMBALIAN',
+        keterangan: 'Pengembalian Iuran - ' + r.anggota,
+        nominal: r.nominal,
+        tipe: 'KREDIT',
+        anggota: r.anggota
+      });
+    }
+  });
+  
   // Sort by tanggal
   allTransaksi.sort(function(a, b) {
     return new Date(a.tanggal) - new Date(b.tanggal);
@@ -2477,6 +3150,7 @@ function previewLaporan() {
     if (t.jenis === 'ANGSURAN') jenisBadge = '<span class="badge badge-ok">Angsuran</span>';
     else if (t.jenis === 'PENCAIRAN') jenisBadge = '<span class="badge badge-wait">Pencairan</span>';
     else if (t.jenis === 'IURAN') jenisBadge = '<span class="badge badge-ok">Iuran</span>';
+    else if (t.jenis === 'PENGEMBALIAN') jenisBadge = '<span class="badge badge-danger">Pengembalian</span>';
     
     html += '<tr><td>' + tgl + '</td><td>' + jenisBadge + '</td><td>' + t.keterangan + '</td><td>' + debet + '</td><td>' + kredit + '</td></tr>';
   });
@@ -2524,6 +3198,8 @@ function previewLogo(input) {
 async function saveAnggota() {
   var nama = document.getElementById('aggNama').value.trim();
   var masuk = document.getElementById('aggTanggal').value;
+  var status = document.getElementById('aggStatus').value;
+  var tanggal_keluar = document.getElementById('aggTanggalKeluar').value;
   var id = document.getElementById('aggId').value;
   
   if (!nama) { alert('Nama wajib diisi!'); return; }
@@ -2531,14 +3207,24 @@ async function saveAnggota() {
   if (isDemoMode) {
     if (id) {
       var idx = appData.anggota.findIndex(function(a) { return a.id === id; });
-      if (idx >= 0) { appData.anggota[idx].nama = nama; appData.anggota[idx].masuk = masuk; }
+      if (idx >= 0) { 
+        appData.anggota[idx].nama = nama; 
+        appData.anggota[idx].masuk = masuk; 
+        appData.anggota[idx].status = status;
+        appData.anggota[idx].tanggal_keluar = status === 'KELUAR' ? tanggal_keluar : null;
+      }
     } else {
-      appData.anggota.push({ id: 'demo_' + Date.now(), nama: nama, masuk: masuk, created_at: new Date().toISOString() });
+      appData.anggota.push({ 
+        id: 'demo_' + Date.now(), 
+        nama: nama, 
+        masuk: masuk, 
+        status: status,
+        tanggal_keluar: status === 'KELUAR' ? tanggal_keluar : null,
+        created_at: new Date().toISOString() 
+      });
     }
     saveDemoData();
-    document.getElementById('aggNama').value = '';
-    document.getElementById('aggTanggal').value = '';
-    document.getElementById('aggId').value = '';
+    resetAnggotaForm();
     renderAnggota();
     return;
   }
@@ -2546,17 +3232,34 @@ async function saveAnggota() {
   showLoading(true);
   try {
     if (id) {
-      await sbClient.from('anggota').update({ nama: nama, masuk: masuk }).eq('id', id);
+      await sbClient.from('anggota').update({ 
+        nama: nama, 
+        masuk: masuk,
+        status: status,
+        tanggal_keluar: status === 'KELUAR' ? tanggal_keluar : null
+      }).eq('id', id);
     } else {
-      await sbClient.from('anggota').insert([{ nama: nama, masuk: masuk }]);
+      await sbClient.from('anggota').insert([{ 
+        nama: nama, 
+        masuk: masuk,
+        status: status,
+        tanggal_keluar: status === 'KELUAR' ? tanggal_keluar : null
+      }]);
     }
     await loadFromSupabase();
-    document.getElementById('aggNama').value = '';
-    document.getElementById('aggTanggal').value = '';
-    document.getElementById('aggId').value = '';
+    resetAnggotaForm();
     renderAnggota();
   } catch (e) { alert('Error: ' + e.message); }
   showLoading(false);
+}
+
+function resetAnggotaForm() {
+  document.getElementById('aggNama').value = '';
+  document.getElementById('aggTanggal').value = '';
+  document.getElementById('aggStatus').value = 'AKTIF';
+  document.getElementById('aggTanggalKeluar').value = '';
+  document.getElementById('aggKeluarContainer').style.display = 'none';
+  document.getElementById('aggId').value = '';
 }
 
 function editAnggota(id) {
@@ -2564,24 +3267,93 @@ function editAnggota(id) {
   if (!a) return;
   document.getElementById('aggNama').value = a.nama;
   document.getElementById('aggTanggal').value = a.masuk || '';
+  document.getElementById('aggStatus').value = a.status || 'AKTIF';
+  if (a.status === 'KELUAR') {
+    document.getElementById('aggKeluarContainer').style.display = 'block';
+    document.getElementById('aggTanggalKeluar').value = a.tanggal_keluar || '';
+  } else {
+    document.getElementById('aggKeluarContainer').style.display = 'none';
+  }
   document.getElementById('aggId').value = id;
 }
 
-async function deleteAnggota(id) {
-  if (!confirm('Yakin hapus anggota ini?')) return;
+function setAnggotaKeluar(id) {
+  var a = appData.anggota.find(function(x) { return x.id === id; });
+  if (!a) return;
+  
+  if (!confirm('Set anggota "' + a.nama + '" sebagai KELUAR?')) return;
+  
+  var tanggalKeluar = prompt('Masukkan tanggal keluar (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+  if (!tanggalKeluar) return;
+  
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggalKeluar)) {
+    alert('Format tanggal tidak valid! Gunakan format YYYY-MM-DD');
+    return;
+  }
   
   if (isDemoMode) {
+    a.status = 'KELUAR';
+    a.tanggal_keluar = tanggalKeluar;
+    saveDemoData();
+    renderAnggota();
+    alert('Status anggota diubah menjadi KELUAR. Silakan proses pengembalian iuran di menu Pengembalian Iuran.');
+    return;
+  }
+  
+  showLoading(true);
+  sbClient.from('anggota').update({
+    status: 'KELUAR',
+    tanggal_keluar: tanggalKeluar
+  }).eq('id', id).then(function() {
+    return loadFromSupabase();
+  }).then(function() {
+    renderAnggota();
+    showLoading(false);
+    alert('Status anggota diubah menjadi KELUAR. Silakan proses pengembalian iuran di menu Pengembalian Iuran.');
+  }).catch(function(e) {
+    alert('Error: ' + e.message);
+    showLoading(false);
+  });
+}
+
+async function deleteAnggota(id) {
+  if (!confirm('Yakin hapus anggota ini? Semua data terkait (pinjaman, angsuran, iuran) juga akan dihapus!')) return;
+  
+  if (isDemoMode) {
+    var a = appData.anggota.find(function(x) { return x.id === id; });
+    if (a) {
+      // Hapus semua data terkait
+      appData.pinjaman = appData.pinjaman.filter(function(p) { return p.anggota !== a.nama; });
+      appData.angsuran = appData.angsuran.filter(function(x) { return x.anggota !== a.nama; });
+      appData.iuran = appData.iuran.filter(function(x) { return x.anggota !== a.nama; });
+      appData.pengajuan = appData.pengajuan.filter(function(x) { return x.anggota !== a.nama; });
+      appData.refund = appData.refund.filter(function(x) { return x.anggota !== a.nama; });
+      appData.kas = appData.kas.filter(function(k) { 
+        return !(k.keterangan && (k.keterangan.includes(a.nama))); 
+      });
+    }
     appData.anggota = appData.anggota.filter(function(a) { return a.id !== id; });
     saveDemoData();
     renderAnggota();
+    updateDashboard();
     return;
   }
   
   showLoading(true);
   try {
+    var a = appData.anggota.find(function(x) { return x.id === id; });
+    if (a) {
+      // Hapus semua data terkait
+      await sbClient.from('pinjaman').delete().eq('anggota', a.nama);
+      await sbClient.from('angsuran').delete().eq('anggota', a.nama);
+      await sbClient.from('iuran').delete().eq('anggota', a.nama);
+      await sbClient.from('pengajuan').delete().eq('anggota', a.nama);
+      await sbClient.from('refund').delete().eq('anggota', a.nama);
+    }
     await sbClient.from('anggota').delete().eq('id', id);
     await loadFromSupabase();
     renderAnggota();
+    updateDashboard();
   } catch (e) { alert('Error: ' + e.message); }
   showLoading(false);
 }
@@ -2596,9 +3368,7 @@ async function savePengajuan() {
   if (isDemoMode) {
     appData.pengajuan.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, lama: lama, status: 'MENUNGGU', created_at: new Date().toISOString() });
     saveDemoData();
-    document.getElementById('pjAnggota').value = '';
-    document.getElementById('pjNominal').value = '';
-    document.getElementById('pjTenor').value = '';
+    resetPengajuanForm();
     renderPengajuan();
     return;
   }
@@ -2607,11 +3377,30 @@ async function savePengajuan() {
   try {
     await sbClient.from('pengajuan').insert([{ anggota: anggota, nominal: nominal, lama: lama, status: 'MENUNGGU' }]);
     await loadFromSupabase();
-    document.getElementById('pjNominal').value = '';
-    document.getElementById('pjTenor').value = '';
+    resetPengajuanForm();
     renderPengajuan();
   } catch (e) { alert('Error: ' + e.message); }
   showLoading(false);
+}
+
+function resetPengajuanForm() {
+  document.getElementById('pjAnggota').value = '';
+  document.getElementById('pjNominal').value = '';
+  document.getElementById('pjTenor').value = '';
+  document.getElementById('pjId').value = '';
+}
+
+function editPengajuan(id) {
+  var p = appData.pengajuan.find(function(x) { return x.id === id; });
+  if (!p) return;
+  
+  document.getElementById('pjAnggota').value = p.anggota;
+  document.getElementById('pjNominal').value = p.nominal;
+  document.getElementById('pjTenor').value = p.lama;
+  document.getElementById('pjId').value = id;
+  
+  // Scroll ke form
+  document.getElementById('pjAnggota').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function cairkan(id) {
@@ -2673,42 +3462,99 @@ function calcSisa() {
   }
 }
 
+function resetAngsuranForm() {
+  document.getElementById('angAnggota').value = '';
+  document.getElementById('angNominal').value = '';
+  document.getElementById('angKe').value = '';
+  document.getElementById('angSisa').value = '';
+  document.getElementById('angId').value = '';
+}
+
 async function saveAngsuran() {
   var anggota = document.getElementById('angAnggota').value;
   var nominal = parseInt(document.getElementById('angNominal').value);
   var ke = parseInt(document.getElementById('angKe').value);
+  var id = document.getElementById('angId').value;
   
   if (!anggota || !nominal || !ke) { alert('Semua field wajib diisi!'); return; }
   
   var p = appData.pinjaman.find(function(x) { return x.anggota === anggota && x.sisa > 0; });
-  if (!p) { alert('Tidak ada pinjaman aktif!'); return; }
-  if (nominal > p.sisa) { alert('Nominal melebihi sisa!'); return; }
+  if (!p && !id) { alert('Tidak ada pinjaman aktif!'); return; }
+  if (!id && nominal > p.sisa) { alert('Nominal melebihi sisa!'); return; }
   
   if (isDemoMode) {
-    appData.angsuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, ke: ke, created_at: new Date().toISOString() });
-    p.sisa -= nominal;
-    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke, created_at: new Date().toISOString() });
+    if (id) {
+      // Edit mode - hitung selisih
+      var oldAngsuran = appData.angsuran.find(function(x) { return x.id === id; });
+      var selisih = nominal - (oldAngsuran ? oldAngsuran.nominal : 0);
+      
+      var idx = appData.angsuran.findIndex(function(x) { return x.id === id; });
+      if (idx >= 0) {
+        appData.angsuran[idx].anggota = anggota;
+        appData.angsuran[idx].nominal = nominal;
+        appData.angsuran[idx].ke = ke;
+        
+        // Update pinjaman
+        var pinj = appData.pinjaman.find(function(x) { return x.anggota === anggota; });
+        if (pinj) {
+          pinj.sisa = Math.max(0, pinj.sisa - selisih);
+        }
+        
+        // Update kas
+        var k = appData.kas.find(function(x) { 
+          return x.keterangan && x.keterangan.includes('Angsuran ' + anggota + ' ke-' + ke); 
+        });
+        if (k) {
+          k.nominal = nominal;
+        }
+      }
+    } else {
+      // Add new
+      appData.angsuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, ke: ke, created_at: new Date().toISOString() });
+      p.sisa -= nominal;
+      appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke, created_at: new Date().toISOString() });
+    }
     saveDemoData();
-    document.getElementById('angAnggota').value = '';
-    document.getElementById('angNominal').value = '';
-    document.getElementById('angKe').value = '';
-    document.getElementById('angSisa').value = '';
-    renderAngsuran();
+    resetAngsuranForm();
+    applyFilterAngsuran();
+    updateDashboard();
     return;
   }
   
   showLoading(true);
   try {
-    await sbClient.from('angsuran').insert([{ anggota: anggota, nominal: nominal, ke: ke }]);
-    await sbClient.from('pinjaman').update({ sisa: p.sisa - nominal }).eq('id', p.id);
-    await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke }]);
+    if (id) {
+      // Edit mode
+      var oldData = appData.angsuran.find(function(x) { return x.id === id; });
+      var selisih = nominal - (oldData ? oldData.nominal : 0);
+      
+      await sbClient.from('angsuran').update({ anggota: anggota, nominal: nominal, ke: ke }).eq('id', id);
+      
+      // Update pinjaman
+      var pinj = appData.pinjaman.find(function(x) { return x.anggota === anggota; });
+      if (pinj) {
+        await sbClient.from('pinjaman').update({ sisa: Math.max(0, pinj.sisa - selisih) }).eq('id', pinj.id);
+      }
+      
+      // Update kas
+      await sbClient.from('kas').update({ nominal: nominal }).eq('keterangan', 'Angsuran ' + anggota + ' ke-' + ke);
+    } else {
+      await sbClient.from('angsuran').insert([{ anggota: anggota, nominal: nominal, ke: ke }]);
+      await sbClient.from('pinjaman').update({ sisa: p.sisa - nominal }).eq('id', p.id);
+      await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke }]);
+    }
     await loadFromSupabase();
-    document.getElementById('angNominal').value = '';
-    document.getElementById('angKe').value = '';
-    document.getElementById('angSisa').value = '';
-    renderAngsuran();
+    resetAngsuranForm();
+    applyFilterAngsuran();
   } catch (e) { alert('Error: ' + e.message); }
   showLoading(false);
+}
+
+function resetIuranForm() {
+  document.getElementById('iurAnggota').value = '';
+  document.getElementById('iurNominal').value = '';
+  document.getElementById('iurBulan').value = '';
+  document.getElementById('iurId').value = '';
 }
 
 async function saveIuran() {
@@ -2727,6 +3573,14 @@ async function saveIuran() {
         appData.iuran[idx].anggota = anggota;
         appData.iuran[idx].nominal = nominal;
         appData.iuran[idx].bulan = bulan;
+        
+        // Update kas
+        var k = appData.kas.find(function(x) { 
+          return x.keterangan && x.keterangan.includes('Iuran ' + anggota + ' ' + bulan); 
+        });
+        if (k) {
+          k.nominal = nominal;
+        }
       }
     } else {
       // Add new
@@ -2734,10 +3588,7 @@ async function saveIuran() {
       appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Iuran ' + anggota + ' ' + bulan, created_at: new Date().toISOString() });
     }
     saveDemoData();
-    document.getElementById('iurAnggota').value = '';
-    document.getElementById('iurNominal').value = '';
-    document.getElementById('iurBulan').value = '';
-    document.getElementById('iurId').value = '';
+    resetIuranForm();
     applyFilterIuran();
     updateDashboard();
     return;
@@ -2747,18 +3598,26 @@ async function saveIuran() {
   try {
     if (id) {
       await sbClient.from('iuran').update({ anggota: anggota, nominal: nominal, bulan: bulan }).eq('id', id);
+      // Update kas
+      await sbClient.from('kas').update({ nominal: nominal }).eq('keterangan', 'Iuran ' + anggota + ' ' + bulan);
     } else {
       await sbClient.from('iuran').insert([{ anggota: anggota, nominal: nominal, bulan: bulan }]);
       await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Iuran ' + anggota + ' ' + bulan }]);
     }
     await loadFromSupabase();
-    document.getElementById('iurAnggota').value = '';
-    document.getElementById('iurNominal').value = '';
-    document.getElementById('iurBulan').value = '';
-    document.getElementById('iurId').value = '';
+    resetIuranForm();
     applyFilterIuran();
   } catch (e) { alert('Error: ' + e.message); }
   showLoading(false);
+}
+
+function resetRefundForm() {
+  document.getElementById('refundAnggota').value = '';
+  document.getElementById('refundNominal').value = '';
+  document.getElementById('refundTanggal').value = new Date().toISOString().split('T')[0];
+  document.getElementById('refundKeterangan').value = '';
+  document.getElementById('refundId').value = '';
+  document.getElementById('refundInfoContainer').classList.add('hidden');
 }
 
 async function saveSettings() {
@@ -2812,6 +3671,14 @@ async function saveSettings() {
     alert('Pengaturan disimpan (mode lokal)!');
   }
   showLoading(false);
+}
+
+function resetSettingsForm() {
+  document.getElementById('setNama').value = 'Paguyuban Simpan Pinjam';
+  document.getElementById('setTagline').value = 'Tanpa Bunga • Kekeluargaan';
+  document.getElementById('setAlamat').value = 'Politeknik Negeri Madura';
+  document.getElementById('setLogo').value = '';
+  document.getElementById('logoPreview').style.display = 'none';
 }
 
 function exportData() {
@@ -2971,6 +3838,31 @@ function downloadReport() {
         keterangan: 'Iuran ' + i.bulan + ' - ' + i.anggota,
         nominal: i.nominal,
         tipe: 'DEBET'
+      });
+    }
+  });
+  
+  // 4. Pengembalian Iuran
+  appData.refund.forEach(function(r) {
+    var date = new Date(r.tanggal);
+    var include = true;
+    
+    if (filterLaporan.nama && r.anggota !== filterLaporan.nama) include = false;
+    if (filterLaporan.tanggal && r.tanggal !== filterLaporan.tanggal) include = false;
+    if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
+    if (filterLaporan.bulan) {
+      var refundBulan = r.tanggal.substring(0, 7);
+      if (refundBulan !== filterLaporan.bulan) include = false;
+    }
+    if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
+    
+    if (include) {
+      allTransaksi.push({
+        tanggal: r.tanggal + 'T00:00:00.000Z',
+        jenis: 'PENGEMBALIAN',
+        keterangan: 'Pengembalian Iuran - ' + r.anggota,
+        nominal: r.nominal,
+        tipe: 'KREDIT'
       });
     }
   });
