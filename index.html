@@ -153,8 +153,6 @@ tbody tr:hover { background: #f9fafb; }
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   z-index: 100;
 }
-.mode-demo { background: #fef3c7; color: #92400e; }
-.mode-live { background: #d1fae5; color: #065f46; }
 
 .empty-state { text-align: center; padding: 40px; color: #6b7280; }
 .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
@@ -494,17 +492,6 @@ h3 { margin-top: 0; color: #1f2937; }
     </div>
     
     <div id="alerts"></div>
-    
-    <div id="quickActions">
-      <button class="btn-success" onclick="startDemo()" style="margin-bottom: 8px;">
-        🚀 Mulai Mode Demo (Cepat)
-      </button>
-      <p style="text-align: center; color: #6b7280; font-size: 12px; margin: 8px 0;">
-        Mode demo tidak perlu login, data tersimpan di browser
-      </p>
-    </div>
-    
-    <div class="divider"><span>ATAU</span></div>
     
     <div class="form-group">
       <label>Email</label>
@@ -1149,8 +1136,6 @@ h3 { margin-top: 0; color: #1f2937; }
   </div>
 </div>
 
-<div id="modeBadge" class="mode-badge mode-demo hidden">DEMO MODE</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -1162,7 +1147,7 @@ var SB_URL = 'https://xqscatmkwzpollfloxwu.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhxc2NhdG1rd3pwb2xsZmxveHd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMjQ3NTQsImV4cCI6MjA4NTgwMDc1NH0.BPy_JoR_hrhVHxviHxAuv_8CF5ZyzrvXkp872UecwHU';
 
 var sbClient = null;
-var isDemoMode = false;
+
 var currentUser = null;
 var currentDetailAnggota = null;
 
@@ -1304,7 +1289,7 @@ async function checkConnection() {
     }
     
     statusEl.innerHTML = '<span>⚠️</span> ' + msg;
-    showAlert(msg + '. Gunakan Mode Demo.', 'warning');
+    showAlert(msg + '. Periksa koneksi internet atau kredensial Supabase.', 'warning');
   }
 }
 
@@ -1377,7 +1362,7 @@ async function doLogin() {
     }
     
     currentUser = result.data.user;
-    isDemoMode = false;
+    
     enterApp();
     
   } catch (e) {
@@ -1386,37 +1371,14 @@ async function doLogin() {
   }
 }
 
-function startDemo() {
-  isDemoMode = true;
-  currentUser = { email: 'demo@local', id: 'demo' };
-  
-  var saved = localStorage.getItem('paguyuban_demo');
-  if (saved) {
-    try {
-      var parsed = JSON.parse(saved);
-      Object.assign(appData, parsed);
-    } catch (e) {
-      console.error('Failed to load demo data');
-    }
-  }
-  
-  enterApp();
-  showAlert('Mode Demo aktif!', 'success');
-}
 
 function enterApp() {
   document.getElementById('loginPage').classList.add('hidden');
   document.getElementById('mainApp').classList.remove('hidden');
   
-  if (isDemoMode) {
-    document.getElementById('modeBadge').classList.remove('hidden');
-    document.getElementById('userInfo').textContent = 'Demo User';
-    document.getElementById('modeInfo').textContent = 'Data lokal';
-  } else {
-    document.getElementById('userInfo').textContent = currentUser.email;
-    document.getElementById('modeInfo').textContent = 'Supabase Cloud';
-    loadFromSupabase();
-  }
+  document.getElementById('userInfo').textContent = currentUser.email;
+  document.getElementById('modeInfo').textContent = 'Supabase Cloud';
+  loadFromSupabase();
   
   updateDashboard();
   updateHeaderSettings();
@@ -1433,18 +1395,12 @@ function updateHeaderSettings() {
 }
 
 function doLogout() {
-  if (isDemoMode) {
-    localStorage.setItem('paguyuban_demo', JSON.stringify(appData));
-  }
-  
-  isDemoMode = false;
   currentUser = null;
   
   if (sbClient) sbClient.auth.signOut();
   
   document.getElementById('mainApp').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
-  document.getElementById('modeBadge').classList.add('hidden');
   document.getElementById('alerts').innerHTML = '';
   
   appData = {
@@ -1457,251 +1413,6 @@ function doLogout() {
       logo: null
     }
   };
-}
-
-// ==========================================
-// DATA OPERATIONS
-// ==========================================
-async function loadFromSupabase() {
-  showLoading(true);
-  try {
-    var results = await Promise.all([
-      sbClient.from('anggota').select('*'),
-      sbClient.from('pengajuan').select('*'),
-      sbClient.from('pinjaman').select('*'),
-      sbClient.from('angsuran').select('*'),
-      sbClient.from('iuran').select('*'),
-      sbClient.from('kas').select('*'),
-      sbClient.from('refund').select('*'), // Load pengembalian iuran
-      sbClient.from('setting').select('*').eq('key', 'app').single()
-    ]);
-    
-    appData.anggota = results[0].data || [];
-    appData.pengajuan = results[1].data || [];
-    appData.pinjaman = results[2].data || [];
-    appData.angsuran = results[3].data || [];
-    appData.iuran = results[4].data || [];
-    appData.kas = results[5].data || [];
-    appData.refund = results[6].data || [];
-    
-    if (results[7].data && results[7].data.value) {
-      Object.assign(appData.settings, results[7].data.value);
-      localStorage.setItem('paguyuban_settings', JSON.stringify(appData.settings));
-      updateHeaderSettings();
-    }
-    
-  } catch (e) {
-    console.error('Load error:', e);
-    showAlert('Gagal memuat data', 'warning');
-  }
-  showLoading(false);
-}
-
-function saveDemoData() {
-  if (isDemoMode) {
-    localStorage.setItem('paguyuban_demo', JSON.stringify(appData));
-  }
-}
-
-// ==========================================
-// NAVIGATION
-// ==========================================
-function navigate(page) {
-  document.getElementById('menu').classList.add('hidden');
-  document.querySelectorAll('#mainApp .card').forEach(function(c) {
-    if (c.id !== 'menu') c.classList.add('hidden');
-  });
-  document.getElementById(page).classList.remove('hidden');
-  renderPage(page);
-}
-
-function backToMenu() {
-  document.querySelectorAll('#mainApp .card').forEach(function(c) {
-    c.classList.add('hidden');
-  });
-  document.getElementById('menu').classList.remove('hidden');
-  currentDetailAnggota = null;
-  document.getElementById('detailAnggotaContainer').classList.add('hidden');
-  document.getElementById('searchAnggota').value = '';
-}
-
-// ==========================================
-// HELPER: HITUNG TOTAL IURAN ANGGOTA
-// ==========================================
-function getTotalIuranAnggota(namaAnggota) {
-  return appData.iuran
-    .filter(function(i) { return i.anggota === namaAnggota; })
-    .reduce(function(total, i) { return total + (i.nominal || 0); }, 0);
-}
-
-// ==========================================
-// HELPER: HITUNG LAMA KEANGGOTAAN (INKLUSIF)
-// Bulan bergabung dihitung sebagai bulan ke-1
-// ==========================================
-function hitungLamaBulan(masukDate, keluarDate) {
-  if (!masukDate) return { text: '-', bulan: 0, sudahSatuBulan: false };
-  
-  var masuk = new Date(masukDate);
-  var today = keluarDate ? new Date(keluarDate) : new Date();
-  
-  // Reset time to compare dates only
-  masuk.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  
-  // Hitung selisih tahun dan bulan
-  var years = today.getFullYear() - masuk.getFullYear();
-  var months = today.getMonth() - masuk.getMonth();
-  
-  // Total bulan matematis (belum ditambah inklusif)
-  var rawMonths = years * 12 + months;
-  
-  // LOGIKA INKLUSIF: Bulan bergabung selalu dihitung sebagai bulan ke-1
-  // Jadi selalu tambah 1 untuk menghitung bulan bergabung itu sendiri
-  var totalMonths = rawMonths + 1;
-  
-  // Jika tanggal hari ini belum mencapai tanggal masuk, kurangi 1
-  // Karena belum selesai 1 bulan penuh dari tanggal masuk bulan ini
-  if (today.getDate() < masuk.getDate()) {
-    totalMonths = totalMonths - 1;
-  }
-  
-  // Pastikan minimal 1 bulan (jika sudah masuk)
-  if (totalMonths < 1) totalMonths = 1;
-  
-  // Format text
-  var parts = [];
-  
-  if (totalMonths >= 12) {
-    var y = Math.floor(totalMonths / 12);
-    var m = totalMonths % 12;
-    parts.push(y + ' th');
-    if (m > 0) {
-      parts.push(m + ' bln');
-    }
-  } else {
-    parts.push(totalMonths + ' bln');
-  }
-  
-  var text = parts.join(' ');
-  
-  return {
-    text: text,
-    bulan: totalMonths, // Total bulan inklusif
-    sudahSatuBulan: totalMonths >= 1,
-    totalBulan: totalMonths
-  };
-}
-
-// ==========================================
-// RENDER
-// ==========================================
-function updateDashboard() {
-  document.getElementById('appTitle').textContent = appData.settings.nama;
-  document.getElementById('appSubtitle').textContent = appData.settings.tagline;
-  
-  // Hitung total semua iuran
-  var totalIuran = appData.iuran.reduce(function(a, b) {
-    return a + (b.nominal || 0);
-  }, 0);
-  
-  // Hitung total angsuran masuk
-  var totalAngsuran = appData.angsuran.reduce(function(a, b) {
-    return a + (b.nominal || 0);
-  }, 0);
-  
-  // Hitung total pencairan pinjaman
-  var totalPinjaman = appData.pinjaman.reduce(function(a, b) {
-    return a + (b.nominal || 0);
-  }, 0);
-  
-  // Hitung Saldo Kas berdasarkan Iuran + Angsuran - Pinjaman (sesuai Ringkasan)
-  var kas = totalIuran + totalAngsuran - totalPinjaman;
-  
-  var piutang = appData.pinjaman.reduce(function(a, b) {
-    return a + b.sisa;
-  }, 0);
-  
-  // Hitung total pengembalian iuran
-  var totalPengembalian = appData.refund.reduce(function(a, b) {
-    return a + (b.nominal || 0);
-  }, 0);
-  
-  // Hitung anggota aktif (yang statusnya tidak KELUAR)
-  var anggotaAktif = appData.anggota.filter(function(a) {
-    return a.status !== 'KELUAR';
-  }).length;
-  
-  document.getElementById('dashKas').textContent = 'Rp ' + kas.toLocaleString('id-ID');
-  document.getElementById('dashPiutang').textContent = 'Rp ' + piutang.toLocaleString('id-ID');
-  document.getElementById('dashAnggota').textContent = anggotaAktif;
-  document.getElementById('dashTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
-  document.getElementById('dashTotalAngsuran').textContent = 'Rp ' + totalAngsuran.toLocaleString('id-ID');
-  document.getElementById('dashTotalPengembalian').textContent = 'Rp ' + totalPinjaman.toLocaleString('id-ID');
-}
-
-function renderPage(page) {
-  updateDashboard();
-  
-  if (page === 'anggota') renderAnggota();
-  else if (page === 'pengajuan') renderPengajuan();
-  else if (page === 'pencairan') renderPencairan();
-  else if (page === 'angsuran') renderAngsuran();
-  else if (page === 'iuran') renderIuran();
-  else if (page === 'pengembalian') renderRefund();
-  else if (page === 'saldo') renderSaldo();
-  else if (page === 'pengaturan') renderSettings();
-  else if (page === 'laporan') renderLaporan();
-}
-
-function renderAnggota() {
-  // Update statistik
-  var totalAnggota = appData.anggota.length;
-  var anggotaAktif = appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).length;
-  var anggotaKeluar = appData.anggota.filter(function(a) { return a.status === 'KELUAR'; }).length;
-  var totalIuran = appData.iuran.reduce(function(a, b) { return a + (b.nominal || 0); }, 0);
-  
-  document.getElementById('statTotalAnggota').textContent = totalAnggota;
-  document.getElementById('statAnggotaAktif').textContent = anggotaAktif;
-  document.getElementById('statAnggotaKeluar').textContent = anggotaKeluar;
-  document.getElementById('statTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
-  
-  var list = document.getElementById('aggList');
-  if (!appData.anggota.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👤</div><p>Belum ada anggota</p></div>';
-    return;
-  }
-  
-  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Masuk</th><th>Status</th><th>Lama</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
-  
-  appData.anggota.forEach(function(a) {
-    var tgl = a.masuk ? new Date(a.masuk).toLocaleDateString('id-ID') : '-';
-    
-    // Gunakan fungsi hitungLamaBulan yang baru (INKLUSIF)
-    var lamaInfo = hitungLamaBulan(a.masuk, a.tanggal_keluar);
-    var lamaText = lamaInfo.text;
-    
-    // Hitung total iuran untuk anggota ini
-    var totalIuranAnggota = getTotalIuranAnggota(a.nama);
-    
-    // Status badge
-    var statusBadge = '';
-    if (a.status === 'KELUAR') {
-      statusBadge = '<span class="badge badge-danger">KELUAR</span>';
-    } else {
-      // Tambahkan indikator jika sudah wajib iuran
-      var wajibIuran = lamaInfo.sudahSatuBulan ? '<span class="badge badge-ok" style="margin-left: 4px;">Wajib Iuran</span>' : '<span class="badge badge-wait" style="margin-left: 4px;">Gratis</span>';
-      statusBadge = '<span class="badge badge-ok">AKTIF</span>' + wajibIuran;
-    }
-    
-    html += '<tr><td><strong>' + a.nama + '</strong></td><td>' + tgl + '</td><td>' + statusBadge + '</td><td>' + lamaText + '</td><td><span class="total-iuran">Rp ' + totalIuranAnggota.toLocaleString('id-ID') + '</span></td><td>' +
-      '<button class="btn-small btn-warning" onclick="editAnggota(\'' + a.id + '\')">Edit</button>' +
-      '<button class="btn-small btn-danger" onclick="deleteAnggota(\'' + a.id + '\')">Hapus</button>' +
-      (a.status !== 'KELUAR' ? '<button class="btn-small btn-purple" onclick="setAnggotaKeluar(\'' + a.id + '\')">Set Keluar</button>' : '') +
-      '</td></tr>';
-  });
-  
-  html += '</tbody></table></div>';
-  list.innerHTML = html;
 }
 
 // ==========================================
@@ -2068,7 +1779,7 @@ function renderPengajuan() {
   
   var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Nominal</th><th>Tenor</th><th>Aksi</th></tr></thead><tbody>';
   pending.forEach(function(p) {
-    html += '<tr><td>' + p.anggota + '</td><td>Rp ' + p.nominal.toLocaleString('id-ID') + '</td><td>' + p.lama + ' bln</td><td>' +
+    html += '<tr><td>' + p.anggota + '</td><td>Rp ' + p.nominal.toLocaleString('id-ID') + '</td><td>' + (p.lama_angsuran || p.lama || '-') + ' bln</td><td>' +
       '<button class="btn-small btn-success" onclick="cairkan(\'' + p.id + '\')">Cairkan</button>' +
       '<button class="btn-small btn-warning" onclick="editPengajuan(\'' + p.id + '\')">Edit</button>' +
       '<button class="btn-small btn-danger" onclick="hapusPengajuan(\'' + p.id + '\')">Hapus</button>' +
@@ -2166,19 +1877,7 @@ function editPencairan(id) {
   // Hitung ulang angsuran
   var newAngsuran = Math.ceil(newNominal / p.lama);
   
-  if (isDemoMode) {
-    p.nominal = newNominal;
-    p.angsuran = newAngsuran;
-    p.tanggal = newTanggal || p.tanggal;
-    // Adjust sisa if needed
-    var totalAngsuran = appData.angsuran
-      .filter(function(a) { return a.anggota === p.anggota; })
-      .reduce(function(sum, a) { return sum + a.nominal; }, 0);
-    p.sisa = Math.max(0, newNominal - totalAngsuran);
-    saveDemoData();
-    applyFilterPencairan();
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('pinjaman').update({ 
@@ -2203,20 +1902,7 @@ function deletePencairan(id) {
   var p = appData.pinjaman.find(function(x) { return x.id === id; });
   if (!p) return;
   
-  if (isDemoMode) {
-    // Hapus pinjaman
-    appData.pinjaman = appData.pinjaman.filter(function(x) { return x.id !== id; });
-    // Hapus angsuran terkait
-    appData.angsuran = appData.angsuran.filter(function(a) { return a.anggota !== p.anggota; });
-    // Update kas (hapus transaksi pencairan)
-    appData.kas = appData.kas.filter(function(k) { 
-      return !(k.keterangan && k.keterangan.includes('Pencairan pinjaman ' + p.anggota)); 
-    });
-    saveDemoData();
-    applyFilterPencairan();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('pinjaman').delete().eq('id', id).then(function() {
@@ -2350,26 +2036,7 @@ function deleteAngsuran(id) {
   var a = appData.angsuran.find(function(x) { return x.id === id; });
   if (!a) return;
   
-  if (isDemoMode) {
-    // Kembalikan sisa pinjaman
-    var p = appData.pinjaman.find(function(x) { return x.anggota === a.anggota; });
-    if (p) {
-      p.sisa += a.nominal;
-    }
-    
-    // Hapus angsuran
-    appData.angsuran = appData.angsuran.filter(function(x) { return x.id !== id; });
-    
-    // Hapus dari kas
-    appData.kas = appData.kas.filter(function(k) { 
-      return !(k.keterangan && k.keterangan.includes('Angsuran ' + a.anggota + ' ke-' + a.ke)); 
-    });
-    
-    saveDemoData();
-    applyFilterAngsuran();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('angsuran').delete().eq('id', id).then(function() {
@@ -2478,17 +2145,7 @@ function deleteIuran(id) {
   
   var i = appData.iuran.find(function(x) { return x.id === id; });
   
-  if (isDemoMode) {
-    appData.iuran = appData.iuran.filter(function(x) { return x.id !== id; });
-    // Hapus dari kas juga
-    appData.kas = appData.kas.filter(function(k) { 
-      return !(k.keterangan && k.keterangan.includes('Iuran ' + i.anggota + ' ' + i.bulan)); 
-    });
-    saveDemoData();
-    applyFilterIuran();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('iuran').delete().eq('id', id).then(function() {
@@ -2654,63 +2311,7 @@ function saveRefund() {
     }
   }
   
-  if (isDemoMode) {
-    if (id) {
-      // Edit mode
-      var idx = appData.refund.findIndex(function(r) { return r.id === id; });
-      if (idx >= 0) {
-        var oldNominal = appData.refund[idx].nominal;
-        appData.refund[idx].anggota = anggota;
-        appData.refund[idx].nominal = nominal;
-        appData.refund[idx].tanggal = tanggal;
-        appData.refund[idx].keterangan = keterangan;
-        
-        // Update kas (kurangi selisih)
-        var selisih = nominal - oldNominal;
-        var k = appData.kas.find(function(x) { 
-          return x.keterangan && x.keterangan.includes('Pengembalian iuran ' + anggota); 
-        });
-        if (k) {
-          k.nominal = nominal;
-          k.tanggal = tanggal;
-          k.created_at = tanggal + 'T00:00:00.000Z';
-        }
-      }
-    } else {
-      // Add new
-      appData.refund.push({
-        id: 'demo_' + Date.now(),
-        anggota: anggota,
-        nominal: nominal,
-        tanggal: tanggal,
-        keterangan: keterangan,
-        created_at: new Date().toISOString()
-      });
-      
-      // Update status anggota menjadi KELUAR jika belum
-      var a = appData.anggota.find(function(x) { return x.nama === anggota; });
-      if (a && a.status !== 'KELUAR') {
-        a.status = 'KELUAR';
-        a.tanggal_keluar = tanggal;
-      }
-      
-      // Tambah ke kas sebagai KREDIT (keluar)
-      appData.kas.push({
-        id: 'demo_' + Date.now(),
-        jenis: 'KREDIT',
-        nominal: nominal,
-        keterangan: 'Pengembalian iuran ' + anggota,
-        tanggal: tanggal,
-        created_at: tanggal + 'T00:00:00.000Z'
-      });
-    }
-    saveDemoData();
-    resetRefundForm();
-    applyFilterRefund();
-    updateDashboard();
-    alert('Pengembalian iuran berhasil diproses!');
-    return;
-  }
+  
   
   showLoading(true);
   
@@ -2790,17 +2391,7 @@ function deleteRefund(id) {
   var r = appData.refund.find(function(x) { return x.id === id; });
   if (!r) return;
   
-  if (isDemoMode) {
-    appData.refund = appData.refund.filter(function(x) { return x.id !== id; });
-    // Hapus dari kas
-    appData.kas = appData.kas.filter(function(k) { 
-      return !(k.keterangan && k.keterangan.includes('Pengembalian iuran ' + r.anggota)); 
-    });
-    saveDemoData();
-    applyFilterRefund();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('refund').delete().eq('id', id).then(function() {
@@ -2894,34 +2485,7 @@ async function saveSaldo() {
     return;
   }
   
-  if (isDemoMode) {
-    if (id) {
-      // Edit mode
-      var idx = appData.kas.findIndex(function(k) { return k.id === id; });
-      if (idx >= 0) {
-        appData.kas[idx].jenis = jenis;
-        appData.kas[idx].nominal = nominal;
-        appData.kas[idx].keterangan = keterangan;
-        appData.kas[idx].tanggal = tanggal;
-        appData.kas[idx].created_at = tanggal + 'T00:00:00.000Z';
-      }
-    } else {
-      // Add new
-      appData.kas.push({
-        id: 'demo_' + Date.now(),
-        jenis: jenis,
-        nominal: nominal,
-        keterangan: keterangan,
-        tanggal: tanggal,
-        created_at: tanggal ? tanggal + 'T00:00:00.000Z' : new Date().toISOString()
-      });
-    }
-    saveDemoData();
-    resetSaldoForm();
-    renderSaldo();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -2966,13 +2530,7 @@ function editSaldo(id) {
 async function deleteSaldo(id) {
   if (!confirm('Yakin hapus transaksi saldo ini?')) return;
   
-  if (isDemoMode) {
-    appData.kas = appData.kas.filter(function(k) { return k.id !== id; });
-    saveDemoData();
-    renderSaldo();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3208,30 +2766,7 @@ async function saveAnggota() {
   
   if (!nama) { alert('Nama wajib diisi!'); return; }
   
-  if (isDemoMode) {
-    if (id) {
-      var idx = appData.anggota.findIndex(function(a) { return a.id === id; });
-      if (idx >= 0) { 
-        appData.anggota[idx].nama = nama; 
-        appData.anggota[idx].masuk = masuk; 
-        appData.anggota[idx].status = status;
-        appData.anggota[idx].tanggal_keluar = status === 'KELUAR' ? tanggal_keluar : null;
-      }
-    } else {
-      appData.anggota.push({ 
-        id: 'demo_' + Date.now(), 
-        nama: nama, 
-        masuk: masuk, 
-        status: status,
-        tanggal_keluar: status === 'KELUAR' ? tanggal_keluar : null,
-        created_at: new Date().toISOString() 
-      });
-    }
-    saveDemoData();
-    resetAnggotaForm();
-    renderAnggota();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3295,14 +2830,7 @@ function setAnggotaKeluar(id) {
     return;
   }
   
-  if (isDemoMode) {
-    a.status = 'KELUAR';
-    a.tanggal_keluar = tanggalKeluar;
-    saveDemoData();
-    renderAnggota();
-    alert('Status anggota diubah menjadi KELUAR. Silakan proses pengembalian iuran di menu Pengembalian Iuran.');
-    return;
-  }
+  
   
   showLoading(true);
   sbClient.from('anggota').update({
@@ -3323,25 +2851,7 @@ function setAnggotaKeluar(id) {
 async function deleteAnggota(id) {
   if (!confirm('Yakin hapus anggota ini? Semua data terkait (pinjaman, angsuran, iuran) juga akan dihapus!')) return;
   
-  if (isDemoMode) {
-    var a = appData.anggota.find(function(x) { return x.id === id; });
-    if (a) {
-      // Hapus semua data terkait
-      appData.pinjaman = appData.pinjaman.filter(function(p) { return p.anggota !== a.nama; });
-      appData.angsuran = appData.angsuran.filter(function(x) { return x.anggota !== a.nama; });
-      appData.iuran = appData.iuran.filter(function(x) { return x.anggota !== a.nama; });
-      appData.pengajuan = appData.pengajuan.filter(function(x) { return x.anggota !== a.nama; });
-      appData.refund = appData.refund.filter(function(x) { return x.anggota !== a.nama; });
-      appData.kas = appData.kas.filter(function(k) { 
-        return !(k.keterangan && (k.keterangan.includes(a.nama))); 
-      });
-    }
-    appData.anggota = appData.anggota.filter(function(a) { return a.id !== id; });
-    saveDemoData();
-    renderAnggota();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3369,17 +2879,11 @@ async function savePengajuan() {
   
   if (!anggota || !nominal || !lama) { alert('Semua field wajib diisi!'); return; }
   
-  if (isDemoMode) {
-    appData.pengajuan.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, lama: lama, status: 'MENUNGGU', created_at: new Date().toISOString() });
-    saveDemoData();
-    resetPengajuanForm();
-    renderPengajuan();
-    return;
-  }
+  
   
   showLoading(true);
   try {
-    await sbClient.from('pengajuan').insert([{ anggota: anggota, nominal: nominal, lama: lama, status: 'MENUNGGU' }]);
+    await sbClient.from('pengajuan').insert([{ anggota: anggota, nominal: nominal, lama_angsuran: lama, status: 'MENUNGGU' }]);
     await loadFromSupabase();
     resetPengajuanForm();
     renderPengajuan();
@@ -3400,7 +2904,7 @@ function editPengajuan(id) {
   
   document.getElementById('pjAnggota').value = p.anggota;
   document.getElementById('pjNominal').value = p.nominal;
-  document.getElementById('pjTenor').value = p.lama;
+  document.getElementById('pjTenor').value = p.lama_angsuran || p.lama || '';
   document.getElementById('pjId').value = id;
   
   // Scroll ke form
@@ -3411,22 +2915,16 @@ async function cairkan(id) {
   var p = appData.pengajuan.find(function(x) { return x.id === id; });
   if (!p) return;
   
-  var angsuran = Math.ceil(p.nominal / p.lama);
+  var lama = p.lama_angsuran || p.lama || 1;
+  var angsuran = Math.ceil(p.nominal / lama);
   var today = new Date().toISOString().split('T')[0];
   
-  if (isDemoMode) {
-    p.status = 'DICAIRKAN';
-    appData.pinjaman.push({ id: 'demo_' + Date.now(), anggota: p.anggota, nominal: p.nominal, lama: p.lama, angsuran: angsuran, sisa: p.nominal, tanggal: today, created_at: new Date().toISOString() });
-    appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'KREDIT', nominal: p.nominal, keterangan: 'Pencairan pinjaman ' + p.anggota, tanggal: today, created_at: new Date().toISOString() });
-    saveDemoData();
-    renderPengajuan();
-    return;
-  }
+  
   
   showLoading(true);
   try {
     await sbClient.from('pengajuan').update({ status: 'DICAIRKAN' }).eq('id', id);
-    await sbClient.from('pinjaman').insert([{ anggota: p.anggota, nominal: p.nominal, lama: p.lama, angsuran: angsuran, sisa: p.nominal, tanggal: today }]);
+    await sbClient.from('pinjaman').insert([{ anggota: p.anggota, nominal: p.nominal, lama: lama, angsuran: angsuran, sisa: p.nominal, tanggal: today }]);
     await sbClient.from('kas').insert([{ jenis: 'KREDIT', nominal: p.nominal, keterangan: 'Pencairan pinjaman ' + p.anggota, tanggal: today }]);
     await loadFromSupabase();
     renderPengajuan();
@@ -3437,12 +2935,7 @@ async function cairkan(id) {
 async function hapusPengajuan(id) {
   if (!confirm('Hapus pengajuan ini?')) return;
   
-  if (isDemoMode) {
-    appData.pengajuan = appData.pengajuan.filter(function(p) { return p.id !== id; });
-    saveDemoData();
-    renderPengajuan();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3486,44 +2979,7 @@ async function saveAngsuran() {
   if (!p && !id) { alert('Tidak ada pinjaman aktif!'); return; }
   if (!id && nominal > p.sisa) { alert('Nominal melebihi sisa!'); return; }
   
-  if (isDemoMode) {
-    if (id) {
-      // Edit mode - hitung selisih
-      var oldAngsuran = appData.angsuran.find(function(x) { return x.id === id; });
-      var selisih = nominal - (oldAngsuran ? oldAngsuran.nominal : 0);
-      
-      var idx = appData.angsuran.findIndex(function(x) { return x.id === id; });
-      if (idx >= 0) {
-        appData.angsuran[idx].anggota = anggota;
-        appData.angsuran[idx].nominal = nominal;
-        appData.angsuran[idx].ke = ke;
-        
-        // Update pinjaman
-        var pinj = appData.pinjaman.find(function(x) { return x.anggota === anggota; });
-        if (pinj) {
-          pinj.sisa = Math.max(0, pinj.sisa - selisih);
-        }
-        
-        // Update kas
-        var k = appData.kas.find(function(x) { 
-          return x.keterangan && x.keterangan.includes('Angsuran ' + anggota + ' ke-' + ke); 
-        });
-        if (k) {
-          k.nominal = nominal;
-        }
-      }
-    } else {
-      // Add new
-      appData.angsuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, ke: ke, created_at: new Date().toISOString() });
-      p.sisa -= nominal;
-      appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke, created_at: new Date().toISOString() });
-    }
-    saveDemoData();
-    resetAngsuranForm();
-    applyFilterAngsuran();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3569,34 +3025,7 @@ async function saveIuran() {
   
   if (!anggota || !nominal || !bulan) { alert('Semua field wajib diisi!'); return; }
   
-  if (isDemoMode) {
-    if (id) {
-      // Edit mode
-      var idx = appData.iuran.findIndex(function(i) { return i.id === id; });
-      if (idx >= 0) {
-        appData.iuran[idx].anggota = anggota;
-        appData.iuran[idx].nominal = nominal;
-        appData.iuran[idx].bulan = bulan;
-        
-        // Update kas
-        var k = appData.kas.find(function(x) { 
-          return x.keterangan && x.keterangan.includes('Iuran ' + anggota + ' ' + bulan); 
-        });
-        if (k) {
-          k.nominal = nominal;
-        }
-      }
-    } else {
-      // Add new
-      appData.iuran.push({ id: 'demo_' + Date.now(), anggota: anggota, nominal: nominal, bulan: bulan, created_at: new Date().toISOString() });
-      appData.kas.push({ id: 'demo_' + Date.now(), jenis: 'DEBET', nominal: nominal, keterangan: 'Iuran ' + anggota + ' ' + bulan, created_at: new Date().toISOString() });
-    }
-    saveDemoData();
-    resetIuranForm();
-    applyFilterIuran();
-    updateDashboard();
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3648,11 +3077,7 @@ async function saveSettings() {
   // Update tampilan header langsung
   updateHeaderSettings();
   
-  if (isDemoMode) {
-    saveDemoData();
-    alert('Pengaturan disimpan!');
-    return;
-  }
+  
   
   showLoading(true);
   try {
@@ -3928,6 +3353,218 @@ function formatDate(date) {
   var month = (d.getMonth() + 1).toString().padStart(2, '0');
   var year = d.getFullYear();
   return day + '-' + month + '-' + year;
+}
+
+// ==========================================
+// FUNGSI NAVIGASI (MISSING - DITAMBAHKAN)
+// ==========================================
+var pages = ['dashboard','anggota','pengajuan','pencairan','angsuran','iuran','pengembalian','saldo','laporan','pengaturan'];
+
+function navigate(page) {
+  // Sembunyikan menu
+  document.getElementById('menu').classList.add('hidden');
+  
+  // Sembunyikan semua halaman
+  pages.forEach(function(p) {
+    var el = document.getElementById(p);
+    if (el) el.classList.add('hidden');
+  });
+  
+  // Tampilkan halaman yang dipilih
+  var target = document.getElementById(page);
+  if (target) {
+    target.classList.remove('hidden');
+  }
+  
+  // Render konten sesuai halaman
+  if (page === 'dashboard') { updateDashboard(); }
+  else if (page === 'anggota') { renderAnggota(); }
+  else if (page === 'pengajuan') { renderPengajuan(); }
+  else if (page === 'pencairan') { renderPencairan(); }
+  else if (page === 'angsuran') { renderAngsuran(); }
+  else if (page === 'iuran') { renderIuran(); }
+  else if (page === 'pengembalian') { renderRefund(); }
+  else if (page === 'saldo') { renderSaldo(); }
+  else if (page === 'laporan') { renderLaporan(); }
+  else if (page === 'pengaturan') { renderSettings(); }
+}
+
+function backToMenu() {
+  // Sembunyikan semua halaman
+  pages.forEach(function(p) {
+    var el = document.getElementById(p);
+    if (el) el.classList.add('hidden');
+  });
+  
+  // Tampilkan menu
+  document.getElementById('menu').classList.remove('hidden');
+}
+
+// ==========================================
+// LOAD DATA DARI SUPABASE (MISSING - DITAMBAHKAN)
+// ==========================================
+async function loadFromSupabase() {
+  if (!sbClient) return;
+  
+  try {
+    var results = await Promise.all([
+      sbClient.from('anggota').select('*').order('id'),
+      sbClient.from('pengajuan').select('*').order('id'),
+      sbClient.from('pinjaman').select('*').order('id'),
+      sbClient.from('angsuran').select('*').order('id'),
+      sbClient.from('iuran').select('*').order('id'),
+      sbClient.from('kas').select('*').order('id'),
+      sbClient.from('refund').select('*').order('id'),
+      sbClient.from('setting').select('*').eq('key', 'app')
+    ]);
+    
+    if (!results[0].error) appData.anggota = results[0].data || [];
+    if (!results[1].error) appData.pengajuan = results[1].data || [];
+    if (!results[2].error) appData.pinjaman = results[2].data || [];
+    if (!results[3].error) appData.angsuran = results[3].data || [];
+    if (!results[4].error) appData.iuran = results[4].data || [];
+    if (!results[5].error) appData.kas = results[5].data || [];
+    if (!results[6].error) appData.refund = results[6].data || [];
+    
+    // Load settings
+    if (!results[7].error && results[7].data && results[7].data.length > 0) {
+      var settingVal = results[7].data[0].value;
+      if (settingVal && typeof settingVal === 'object') {
+        Object.assign(appData.settings, settingVal);
+      }
+    }
+  } catch (e) {
+    console.error('loadFromSupabase error:', e);
+  }
+}
+
+// ==========================================
+// DASHBOARD UPDATE (MISSING - DITAMBAHKAN)
+// ==========================================
+function updateDashboard() {
+  // Saldo Kas
+  var totalDebet = 0;
+  var totalKredit = 0;
+  appData.kas.forEach(function(k) {
+    if (k.jenis === 'DEBET') totalDebet += (k.nominal || 0);
+    else totalKredit += (k.nominal || 0);
+  });
+  var saldoKas = totalDebet - totalKredit;
+  
+  // Total Piutang (sisa pinjaman)
+  var totalPiutang = appData.pinjaman.reduce(function(sum, p) { return sum + (p.sisa || 0); }, 0);
+  
+  // Jumlah anggota aktif
+  var anggotaAktif = appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).length;
+  
+  // Total iuran terkumpul
+  var totalIuran = appData.iuran.reduce(function(sum, i) { return sum + (i.nominal || 0); }, 0);
+  
+  // Total angsuran masuk
+  var totalAngsuran = appData.angsuran.reduce(function(sum, a) { return sum + (a.nominal || 0); }, 0);
+  
+  // Total pinjaman dicairkan
+  var totalPinjaman = appData.pinjaman.reduce(function(sum, p) { return sum + (p.nominal || 0); }, 0);
+  
+  var el = function(id) { return document.getElementById(id); };
+  if (el('dashKas')) el('dashKas').textContent = 'Rp ' + saldoKas.toLocaleString('id-ID');
+  if (el('dashPiutang')) el('dashPiutang').textContent = 'Rp ' + totalPiutang.toLocaleString('id-ID');
+  if (el('dashAnggota')) el('dashAnggota').textContent = anggotaAktif;
+  if (el('dashTotalIuran')) el('dashTotalIuran').textContent = 'Rp ' + totalIuran.toLocaleString('id-ID');
+  if (el('dashTotalAngsuran')) el('dashTotalAngsuran').textContent = 'Rp ' + totalAngsuran.toLocaleString('id-ID');
+  if (el('dashTotalPengembalian')) el('dashTotalPengembalian').textContent = 'Rp ' + totalPinjaman.toLocaleString('id-ID');
+}
+
+// ==========================================
+// RENDER ANGGOTA (MISSING - DITAMBAHKAN)
+// ==========================================
+function renderAnggota() {
+  // Update statistik
+  var total = appData.anggota.length;
+  var aktif = appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).length;
+  var keluar = appData.anggota.filter(function(a) { return a.status === 'KELUAR'; }).length;
+  var totalIuranMasuk = appData.iuran.reduce(function(sum, i) { return sum + (i.nominal || 0); }, 0);
+  
+  var el = function(id) { return document.getElementById(id); };
+  if (el('statTotalAnggota')) el('statTotalAnggota').textContent = total;
+  if (el('statAnggotaAktif')) el('statAnggotaAktif').textContent = aktif;
+  if (el('statAnggotaKeluar')) el('statAnggotaKeluar').textContent = keluar;
+  if (el('statTotalIuran')) el('statTotalIuran').textContent = 'Rp ' + totalIuranMasuk.toLocaleString('id-ID');
+  
+  // Render tabel anggota
+  var list = document.getElementById('aggList');
+  if (!list) return;
+  
+  if (!appData.anggota.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>Belum ada data anggota</p></div>';
+    return;
+  }
+  
+  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Tgl Masuk</th><th>Status</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
+  appData.anggota.forEach(function(a) {
+    var statusBadge = a.status === 'KELUAR' ? 
+      '<span class="badge badge-danger">KELUAR</span>' : 
+      '<span class="badge badge-ok">AKTIF</span>';
+    var tglMasuk = a.masuk ? new Date(a.masuk).toLocaleDateString('id-ID') : '-';
+    var totalIuranA = getTotalIuranAnggota(a.nama);
+    
+    html += '<tr>';
+    html += '<td>' + a.nama + '</td>';
+    html += '<td>' + tglMasuk + '</td>';
+    html += '<td>' + statusBadge + '</td>';
+    html += '<td><span class="total-iuran">Rp ' + totalIuranA.toLocaleString('id-ID') + '</span></td>';
+    html += '<td>';
+    html += '<button class="btn-small btn-warning" onclick="editAnggota(\'' + a.id + '\')">Edit</button>';
+    if (a.status !== 'KELUAR') {
+      html += '<button class="btn-small btn-secondary" onclick="setAnggotaKeluar(\'' + a.id + '\')">Keluar</button>';
+    }
+    html += '<button class="btn-small btn-danger" onclick="deleteAnggota(\'' + a.id + '\')">Hapus</button>';
+    html += '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  list.innerHTML = html;
+}
+
+// ==========================================
+// HELPER FUNCTIONS (MISSING - DITAMBAHKAN)
+// ==========================================
+function getTotalIuranAnggota(nama) {
+  return appData.iuran
+    .filter(function(i) { return i.anggota === nama; })
+    .reduce(function(sum, i) { return sum + (i.nominal || 0); }, 0);
+}
+
+function hitungLamaBulan(tglMasuk, tglKeluar) {
+  if (!tglMasuk) return { bulan: 0, text: 'Tidak diketahui', sudahSatuBulan: false };
+  
+  var start = new Date(tglMasuk);
+  var end = tglKeluar ? new Date(tglKeluar) : new Date();
+  
+  var tahun = end.getFullYear() - start.getFullYear();
+  var bulan = end.getMonth() - start.getMonth();
+  var totalBulan = (tahun * 12) + bulan;
+  
+  // Inklusif: jika hari akhir >= hari mulai, tambah 1 bulan
+  if (end.getDate() >= start.getDate()) {
+    totalBulan += 1;
+  }
+  
+  if (totalBulan < 1) totalBulan = 1;
+  
+  var tahunDisplay = Math.floor((totalBulan - 1) / 12);
+  var bulanDisplay = (totalBulan - 1) % 12;
+  
+  var text = '';
+  if (tahunDisplay > 0) text += tahunDisplay + ' tahun ';
+  if (bulanDisplay > 0) text += bulanDisplay + ' bulan';
+  if (!text) text = '< 1 bulan';
+  text = text.trim();
+  
+  return {
+    bulan: totalBulan,
+    text: text,
+    sudahSatuBulan: totalBulan >= 1
+  };
 }
 </script>
 </body>
