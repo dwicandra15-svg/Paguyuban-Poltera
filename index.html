@@ -660,6 +660,11 @@ h3 { margin-top: 0; color: #1f2937; }
         </div>
       </div>
       
+      <!-- Search Anggota di tabel -->
+      <div class="form-group" style="margin-bottom:8px;">
+        <input type="text" placeholder="🔍 Cari nama anggota di tabel..." oninput="renderAnggota(this.value)" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+      </div>
+      
       <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
       
       <h4>Tambah/Edit Anggota</h4>
@@ -727,6 +732,9 @@ h3 { margin-top: 0; color: #1f2937; }
         <button class="btn-secondary" onclick="resetPengajuanForm()" style="flex: 1;">Reset</button>
       </div>
       
+      <div class="form-group" style="margin-top:16px;">
+        <input type="text" id="searchPengajuan" placeholder="🔍 Cari nama anggota..." oninput="renderPengajuan()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+      </div>
       <div id="pjList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -759,6 +767,9 @@ h3 { margin-top: 0; color: #1f2937; }
         </div>
       </div>
       
+      <div class="form-group" style="margin-top:4px;">
+        <input type="text" id="searchCairNama" placeholder="🔍 Ketik nama anggota..." oninput="applyFilterPencairan()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+      </div>
       <div id="cairList"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -832,6 +843,9 @@ h3 { margin-top: 0; color: #1f2937; }
         <button class="btn-secondary" onclick="resetAngsuranForm()" style="flex: 1;">Reset</button>
       </div>
       
+      <div class="form-group" style="margin-top:4px;">
+        <input type="text" id="searchAngsuranNama" placeholder="🔍 Ketik nama anggota..." oninput="applyFilterAngsuran()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+      </div>
       <div id="angList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -876,8 +890,8 @@ h3 { margin-top: 0; color: #1f2937; }
         <input type="number" id="iurNominal" placeholder="50000">
       </div>
       <div class="form-group">
-        <label>Periode (Bulan-Tahun)</label>
-        <input type="month" id="iurBulan">
+        <label>Periode (Tanggal Iuran)</label>
+        <input type="date" id="iurBulan">
       </div>
       <input type="hidden" id="iurId">
       <div class="flex gap-2">
@@ -885,6 +899,9 @@ h3 { margin-top: 0; color: #1f2937; }
         <button class="btn-secondary" onclick="resetIuranForm()" style="flex: 1;">Reset</button>
       </div>
       
+      <div class="form-group" style="margin-top:4px;">
+        <input type="text" id="searchIuranNama" placeholder="🔍 Ketik nama anggota..." oninput="applyFilterIuran()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+      </div>
       <div id="iurList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -988,6 +1005,9 @@ h3 { margin-top: 0; color: #1f2937; }
         <button class="btn-secondary" onclick="resetRefundForm()" style="flex: 1;">Reset</button>
       </div>
       
+      <div class="form-group" style="margin-top:4px;">
+        <input type="text" id="searchRefundNama" placeholder="🔍 Ketik nama anggota..." oninput="applyFilterRefund()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+      </div>
       <div id="refundList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -1554,7 +1574,8 @@ function showDetailAnggota(anggota) {
     html += '<div class="activity-list">';
     iuranList.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); }).forEach(function(i) {
       html += '<div class="activity-item">';
-      html += '<div>Iuran ' + i.bulan + ': Rp ' + i.nominal.toLocaleString('id-ID') + '</div>';
+      var periodeDetailDisplay = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
+      html += '<div>Iuran ' + periodeDetailDisplay + ': Rp ' + i.nominal.toLocaleString('id-ID') + '</div>';
       html += '<div class="activity-date">' + new Date(i.created_at).toLocaleDateString('id-ID') + '</div>';
       html += '</div>';
     });
@@ -1761,16 +1782,20 @@ function downloadDetailPDF() {
 }
 
 function renderPengajuan() {
+  var searchText = (document.getElementById('searchPengajuan') ? document.getElementById('searchPengajuan').value.toLowerCase() : '');
   var select = document.getElementById('pjAnggota');
   var options = '<option value="">Pilih Anggota</option>';
-  // Hanya tampilkan anggota aktif
   appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).forEach(function(a) {
     options += '<option value="' + a.nama + '">' + a.nama + '</option>';
   });
   select.innerHTML = options;
   
   var list = document.getElementById('pjList');
-  var pending = appData.pengajuan.filter(function(p) { return p.status === 'MENUNGGU'; });
+  var pending = appData.pengajuan.filter(function(p) {
+    if (p.status !== 'MENUNGGU') return false;
+    if (searchText && !p.anggota.toLowerCase().includes(searchText)) return false;
+    return true;
+  });
   
   if (!pending.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>Tidak ada pengajuan pending</p></div>';
@@ -1788,7 +1813,6 @@ function renderPengajuan() {
   html += '</tbody></table></div>';
   list.innerHTML = html;
 }
-
 // ==========================================
 // PENCAIRAN DENGAN FILTER DAN EDIT/HAPUS
 // ==========================================
@@ -1808,10 +1832,13 @@ function applyFilterPencairan() {
   filterPencairan.nama = document.getElementById('filterCairNama').value;
   filterPencairan.bulan = document.getElementById('filterCairBulan').value;
   filterPencairan.tanggal = document.getElementById('filterCairTanggal').value;
+  var searchText = (document.getElementById('searchCairNama') ? document.getElementById('searchCairNama').value.toLowerCase() : '');
   
   var filtered = appData.pinjaman.filter(function(p) {
-    // Filter nama
+    // Filter nama (select)
     if (filterPencairan.nama && p.anggota !== filterPencairan.nama) return false;
+    // Filter text search
+    if (searchText && !p.anggota.toLowerCase().includes(searchText)) return false;
     
     // Filter bulan
     if (filterPencairan.bulan && p.tanggal) {
@@ -1847,55 +1874,45 @@ function resetFilterPencairan() {
   document.getElementById('filterCairNama').value = '';
   document.getElementById('filterCairBulan').value = '';
   document.getElementById('filterCairTanggal').value = '';
+  if (document.getElementById('searchCairNama')) document.getElementById('searchCairNama').value = '';
   applyFilterPencairan();
 }
 
 function editPencairan(id) {
   var p = appData.pinjaman.find(function(x) { return x.id === id; });
   if (!p) return;
-  
-  // Buat form edit sederhana dengan prompt
-  var newNominal = prompt('Edit Nominal Pinjaman:', p.nominal);
-  if (newNominal === null) return;
-  
-  newNominal = parseInt(newNominal);
-  if (isNaN(newNominal) || newNominal <= 0) {
-    alert('Nominal tidak valid!');
-    return;
-  }
-  
-  // Edit tanggal pencairan
-  var newTanggal = prompt('Edit Tanggal Pencairan (YYYY-MM-DD):', p.tanggal || '');
-  if (newTanggal === null) return;
-  
-  // Validasi format tanggal
-  if (newTanggal && !/^\d{4}-\d{2}-\d{2}$/.test(newTanggal)) {
-    alert('Format tanggal tidak valid! Gunakan format YYYY-MM-DD');
-    return;
-  }
-  
-  // Hitung ulang angsuran
-  var newAngsuran = Math.ceil(newNominal / p.lama);
-  
-  
-  
-  showLoading(true);
-  sbClient.from('pinjaman').update({ 
-    nominal: newNominal, 
-    angsuran: newAngsuran,
-    tanggal: newTanggal || p.tanggal,
-    sisa: Math.max(0, newNominal - (p.nominal - p.sisa))
-  }).eq('id', id).then(function() {
-    loadFromSupabase().then(function() {
-      applyFilterPencairan();
-      showLoading(false);
-    });
-  }).catch(function(e) {
-    alert('Error: ' + e.message);
-    showLoading(false);
-  });
+  document.getElementById('editCairId').value = id;
+  document.getElementById('editCairNominal').value = p.nominal;
+  document.getElementById('editCairTanggal').value = p.tanggal || '';
+  document.getElementById('modalEditPencairan').style.display = 'flex';
 }
 
+function closeModalEditPencairan() {
+  document.getElementById('modalEditPencairan').style.display = 'none';
+}
+
+async function simpanEditPencairan() {
+  var id = document.getElementById('editCairId').value;
+  var newNominal = parseInt(document.getElementById('editCairNominal').value);
+  var newTanggal = document.getElementById('editCairTanggal').value;
+  if (isNaN(newNominal) || newNominal <= 0) { alert('Nominal tidak valid!'); return; }
+  if (!newTanggal) { alert('Tanggal pencairan wajib diisi!'); return; }
+  var p = appData.pinjaman.find(function(x) { return x.id === id; });
+  if (!p) return;
+  var newAngsuran = Math.ceil(newNominal / p.lama);
+  closeModalEditPencairan();
+  showLoading(true);
+  try {
+    await sbClient.from('pinjaman').update({
+      nominal: newNominal, angsuran: newAngsuran, tanggal: newTanggal,
+      sisa: Math.max(0, newNominal - (p.nominal - p.sisa))
+    }).eq('id', id);
+    await loadFromSupabase();
+    applyFilterPencairan();
+    updateDashboard();
+  } catch(e) { alert('Error: ' + e.message); }
+  showLoading(false);
+}
 function deletePencairan(id) {
   if (!confirm('Yakin hapus pencairan ini? Semua angsuran terkait juga akan dihapus!')) return;
   
@@ -1955,12 +1972,15 @@ function applyFilterAngsuran() {
   filterAngsuran.bulan = document.getElementById('filterAngsuranBulan').value;
   filterAngsuran.tanggal = document.getElementById('filterAngsuranTanggal').value;
   filterAngsuran.minggu = document.getElementById('filterAngsuranMinggu').value;
+  var searchText = (document.getElementById('searchAngsuranNama') ? document.getElementById('searchAngsuranNama').value.toLowerCase() : '');
   
   var filtered = appData.angsuran.filter(function(a) {
     var date = new Date(a.created_at);
     
-    // Filter nama
+    // Filter nama (select)
     if (filterAngsuran.nama && a.anggota !== filterAngsuran.nama) return false;
+    // Filter text search
+    if (searchText && !a.anggota.toLowerCase().includes(searchText)) return false;
     
     // Filter bulan
     if (filterAngsuran.bulan) {
@@ -2012,6 +2032,7 @@ function resetFilterAngsuran() {
   document.getElementById('filterAngsuranBulan').value = '';
   document.getElementById('filterAngsuranTanggal').value = '';
   document.getElementById('filterAngsuranMinggu').value = '';
+  if (document.getElementById('searchAngsuranNama')) document.getElementById('searchAngsuranNama').value = '';
   applyFilterAngsuran();
 }
 
@@ -2084,13 +2105,16 @@ function applyFilterIuran() {
   filterIuran.nama = document.getElementById('filterIuranNama').value;
   filterIuran.bulan = document.getElementById('filterIuranBulan').value;
   filterIuran.tanggal = document.getElementById('filterIuranTanggal').value;
+  var searchText = (document.getElementById('searchIuranNama') ? document.getElementById('searchIuranNama').value.toLowerCase() : '');
   
   var filtered = appData.iuran.filter(function(i) {
-    // Filter nama
+    // Filter nama (select)
     if (filterIuran.nama && i.anggota !== filterIuran.nama) return false;
+    // Filter text search
+    if (searchText && !i.anggota.toLowerCase().includes(searchText)) return false;
     
     // Filter bulan
-    if (filterIuran.bulan && i.bulan !== filterIuran.bulan) return false;
+    if (filterIuran.bulan && !(i.bulan && i.bulan.startsWith(filterIuran.bulan))) return false;
     
     // Filter tanggal spesifik
     if (filterIuran.tanggal && i.created_at) {
@@ -2111,7 +2135,8 @@ function applyFilterIuran() {
   var reversed = filtered.slice().reverse();
   reversed.forEach(function(i) {
     var tgl = i.created_at ? new Date(i.created_at).toLocaleDateString('id-ID') : '-';
-    html += '<tr><td>' + i.anggota + '</td><td>' + i.bulan + '</td><td>Rp ' + i.nominal.toLocaleString('id-ID') + '</td><td>' + tgl + '</td><td>' +
+    var periodeDisplay = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
+    html += '<tr><td>' + i.anggota + '</td><td>' + periodeDisplay + '</td><td>Rp ' + i.nominal.toLocaleString('id-ID') + '</td><td>' + tgl + '</td><td>' +
       '<button class="btn-small btn-warning" onclick="editIuran(\'' + i.id + '\')">Edit</button>' +
       '<button class="btn-small btn-danger" onclick="deleteIuran(\'' + i.id + '\')">Hapus</button>' +
       '</td></tr>';
@@ -2124,6 +2149,7 @@ function resetFilterIuran() {
   document.getElementById('filterIuranNama').value = '';
   document.getElementById('filterIuranBulan').value = '';
   document.getElementById('filterIuranTanggal').value = '';
+  if (document.getElementById('searchIuranNama')) document.getElementById('searchIuranNama').value = '';
   applyFilterIuran();
 }
 
@@ -2133,7 +2159,7 @@ function editIuran(id) {
   
   document.getElementById('iurAnggota').value = i.anggota;
   document.getElementById('iurNominal').value = i.nominal;
-  document.getElementById('iurBulan').value = i.bulan;
+  document.getElementById('iurBulan').value = i.bulan ? (i.bulan.length > 7 ? i.bulan.split('T')[0] : i.bulan + '-01') : '';
   document.getElementById('iurId').value = id;
   
   // Scroll ke form
@@ -2235,10 +2261,13 @@ function applyFilterRefund() {
   filterRefund.nama = document.getElementById('filterRefundNama').value;
   filterRefund.bulan = document.getElementById('filterRefundBulan').value;
   filterRefund.tanggal = document.getElementById('filterRefundTanggal').value;
+  var searchText = (document.getElementById('searchRefundNama') ? document.getElementById('searchRefundNama').value.toLowerCase() : '');
   
   var filtered = appData.refund.filter(function(r) {
-    // Filter nama
+    // Filter nama (select)
     if (filterRefund.nama && r.anggota !== filterRefund.nama) return false;
+    // Filter text search
+    if (searchText && !r.anggota.toLowerCase().includes(searchText)) return false;
     
     // Filter bulan
     if (filterRefund.bulan && r.tanggal) {
@@ -2287,6 +2316,7 @@ function resetFilterRefund() {
   document.getElementById('filterRefundNama').value = '';
   document.getElementById('filterRefundBulan').value = '';
   document.getElementById('filterRefundTanggal').value = '';
+  if (document.getElementById('searchRefundNama')) document.getElementById('searchRefundNama').value = '';
   applyFilterRefund();
 }
 
@@ -2641,14 +2671,15 @@ function previewLaporan() {
     if (filterLaporan.nama && i.anggota !== filterLaporan.nama) include = false;
     if (filterLaporan.tanggal && i.created_at.split('T')[0] !== filterLaporan.tanggal) include = false;
     if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
-    if (filterLaporan.bulan && i.bulan !== filterLaporan.bulan) include = false;
+    if (filterLaporan.bulan && !(i.bulan && i.bulan.startsWith(filterLaporan.bulan))) include = false;
     if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
     
     if (include) {
+      var iuranPeriodeLabel = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
       allTransaksi.push({
         tanggal: i.created_at,
         jenis: 'IURAN',
-        keterangan: 'Iuran ' + i.bulan + ' - ' + i.anggota,
+        keterangan: 'Iuran ' + iuranPeriodeLabel + ' - ' + i.anggota,
         nominal: i.nominal,
         tipe: 'DEBET',
         anggota: i.anggota
@@ -3257,14 +3288,15 @@ function downloadReport() {
     if (filterLaporan.nama && i.anggota !== filterLaporan.nama) include = false;
     if (filterLaporan.tanggal && i.created_at.split('T')[0] !== filterLaporan.tanggal) include = false;
     if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
-    if (filterLaporan.bulan && i.bulan !== filterLaporan.bulan) include = false;
+    if (filterLaporan.bulan && !(i.bulan && i.bulan.startsWith(filterLaporan.bulan))) include = false;
     if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
     
     if (include) {
+      var iuranPeriodeLabel = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
       allTransaksi.push({
         tanggal: i.created_at,
         jenis: 'IURAN',
-        keterangan: 'Iuran ' + i.bulan + ' - ' + i.anggota,
+        keterangan: 'Iuran ' + iuranPeriodeLabel + ' - ' + i.anggota,
         nominal: i.nominal,
         tipe: 'DEBET'
       });
@@ -3442,14 +3474,12 @@ async function loadFromSupabase() {
 // DASHBOARD UPDATE (MISSING - DITAMBAHKAN)
 // ==========================================
 function updateDashboard() {
-  // Saldo Kas
-  var totalDebet = 0;
-  var totalKredit = 0;
-  appData.kas.forEach(function(k) {
-    if (k.jenis === 'DEBET') totalDebet += (k.nominal || 0);
-    else totalKredit += (k.nominal || 0);
-  });
-  var saldoKas = totalDebet - totalKredit;
+  // Saldo Kas = (Total Iuran + Total Angsuran) - (Total Pencairan + Total Pengembalian Iuran)
+  var totalIuranMasuk = appData.iuran.reduce(function(sum, i) { return sum + (i.nominal || 0); }, 0);
+  var totalAngsuranMasuk = appData.angsuran.reduce(function(sum, a) { return sum + (a.nominal || 0); }, 0);
+  var totalPencairan = appData.pinjaman.reduce(function(sum, p) { return sum + (p.nominal || 0); }, 0);
+  var totalPengembalian = appData.refund.reduce(function(sum, r) { return sum + (r.nominal || 0); }, 0);
+  var saldoKas = (totalIuranMasuk + totalAngsuranMasuk) - (totalPencairan + totalPengembalian);
   
   // Total Piutang (sisa pinjaman)
   var totalPiutang = appData.pinjaman.reduce(function(sum, p) { return sum + (p.sisa || 0); }, 0);
@@ -3478,7 +3508,8 @@ function updateDashboard() {
 // ==========================================
 // RENDER ANGGOTA (MISSING - DITAMBAHKAN)
 // ==========================================
-function renderAnggota() {
+function renderAnggota(filterNamaVal) {
+  filterNamaVal = filterNamaVal || '';
   // Update statistik
   var total = appData.anggota.length;
   var aktif = appData.anggota.filter(function(a) { return a.status !== 'KELUAR'; }).length;
@@ -3491,26 +3522,34 @@ function renderAnggota() {
   if (el('statAnggotaKeluar')) el('statAnggotaKeluar').textContent = keluar;
   if (el('statTotalIuran')) el('statTotalIuran').textContent = 'Rp ' + totalIuranMasuk.toLocaleString('id-ID');
   
-  // Render tabel anggota
   var list = document.getElementById('aggList');
   if (!list) return;
   
-  if (!appData.anggota.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>Belum ada data anggota</p></div>';
+  var today = new Date();
+  var filtered = appData.anggota.filter(function(a) {
+    if (!filterNamaVal) return true;
+    return a.nama.toLowerCase().includes(filterNamaVal.toLowerCase());
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><p>Tidak ada anggota yang cocok</p></div>';
     return;
   }
   
-  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Tgl Masuk</th><th>Status</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
-  appData.anggota.forEach(function(a) {
-    var statusBadge = a.status === 'KELUAR' ? 
-      '<span class="badge badge-danger">KELUAR</span>' : 
+  var html = '<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Tgl Masuk</th><th>Lama</th><th>Status</th><th>Total Iuran</th><th>Aksi</th></tr></thead><tbody>';
+  filtered.forEach(function(a) {
+    var statusBadge = a.status === 'KELUAR' ?
+      '<span class="badge badge-danger">KELUAR</span>' :
       '<span class="badge badge-ok">AKTIF</span>';
     var tglMasuk = a.masuk ? new Date(a.masuk).toLocaleDateString('id-ID') : '-';
     var totalIuranA = getTotalIuranAnggota(a.nama);
+    // Hitung lama real-time: jika aktif pakai hari ini, jika keluar pakai tanggal_keluar
+    var lamaInfo = hitungLamaBulan(a.masuk, a.status === 'KELUAR' ? a.tanggal_keluar : null);
     
     html += '<tr>';
     html += '<td>' + a.nama + '</td>';
     html += '<td>' + tglMasuk + '</td>';
+    html += '<td style="font-size:12px; color:#4b5563;">' + lamaInfo.text + '</td>';
     html += '<td>' + statusBadge + '</td>';
     html += '<td><span class="total-iuran">Rp ' + totalIuranA.toLocaleString('id-ID') + '</span></td>';
     html += '<td>';
@@ -3524,10 +3563,6 @@ function renderAnggota() {
   html += '</tbody></table></div>';
   list.innerHTML = html;
 }
-
-// ==========================================
-// HELPER FUNCTIONS (MISSING - DITAMBAHKAN)
-// ==========================================
 function getTotalIuranAnggota(nama) {
   return appData.iuran
     .filter(function(i) { return i.anggota === nama; })
@@ -3540,19 +3575,17 @@ function hitungLamaBulan(tglMasuk, tglKeluar) {
   var start = new Date(tglMasuk);
   var end = tglKeluar ? new Date(tglKeluar) : new Date();
   
-  var tahun = end.getFullYear() - start.getFullYear();
-  var bulan = end.getMonth() - start.getMonth();
-  var totalBulan = (tahun * 12) + bulan;
-  
-  // Inklusif: jika hari akhir >= hari mulai, tambah 1 bulan
-  if (end.getDate() >= start.getDate()) {
-    totalBulan += 1;
-  }
+  // Hitung selisih bulan secara inklusif:
+  // Bulan bergabung (start) langsung terhitung sebagai bulan ke-1
+  // Contoh: bergabung Maret 2023, sekarang Maret 2026 → 37 bulan (3 tahun 1 bulan)
+  var totalBulan = (end.getFullYear() - start.getFullYear()) * 12 
+                  + (end.getMonth() - start.getMonth()) 
+                  + 1; // +1 karena bulan bergabung langsung terhitung
   
   if (totalBulan < 1) totalBulan = 1;
   
-  var tahunDisplay = Math.floor((totalBulan - 1) / 12);
-  var bulanDisplay = (totalBulan - 1) % 12;
+  var tahunDisplay = Math.floor(totalBulan / 12);
+  var bulanDisplay = totalBulan % 12;
   
   var text = '';
   if (tahunDisplay > 0) text += tahunDisplay + ' tahun ';
@@ -3567,5 +3600,25 @@ function hitungLamaBulan(tglMasuk, tglKeluar) {
   };
 }
 </script>
+
+<!-- MODAL EDIT PENCAIRAN -->
+<div id="modalEditPencairan" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9998; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; padding:24px; width:100%; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0; color:#1f2937;">✏️ Edit Pencairan Pinjaman</h3>
+    <input type="hidden" id="editCairId">
+    <div class="form-group">
+      <label>Nominal Pinjaman (Rp)</label>
+      <input type="number" id="editCairNominal" placeholder="0">
+    </div>
+    <div class="form-group">
+      <label>Tanggal Pencairan</label>
+      <input type="date" id="editCairTanggal">
+    </div>
+    <div class="flex gap-2" style="margin-top:16px;">
+      <button onclick="simpanEditPencairan()" style="flex:1;">Simpan</button>
+      <button class="btn-secondary" onclick="closeModalEditPencairan()" style="flex:1;">Batal</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
