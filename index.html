@@ -834,6 +834,11 @@ h3 { margin-top: 0; color: #1f2937; }
         <input type="number" id="angKe" placeholder="1">
       </div>
       <div class="form-group">
+        <label>Tanggal Transaksi (kapan uang diterima)</label>
+        <input type="date" id="angTanggal">
+        <small style="color:#6b7280;">⚠️ Jika input susulan/kolektif, ubah ke tanggal transaksi asli, bukan tanggal hari ini.</small>
+      </div>
+      <div class="form-group">
         <label>Sisa Setelah Bayar</label>
         <input type="text" id="angSisa" readonly placeholder="Pilih anggota dan masukkan nominal">
       </div>
@@ -2043,6 +2048,7 @@ function editAngsuran(id) {
   document.getElementById('angAnggota').value = a.anggota;
   document.getElementById('angNominal').value = a.nominal;
   document.getElementById('angKe').value = a.ke;
+  document.getElementById('angTanggal').value = a.created_at ? a.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
   document.getElementById('angId').value = id;
   
   calcSisa();
@@ -2116,10 +2122,10 @@ function applyFilterIuran() {
     // Filter bulan
     if (filterIuran.bulan && !(i.bulan && i.bulan.startsWith(filterIuran.bulan))) return false;
     
-    // Filter tanggal spesifik
-    if (filterIuran.tanggal && i.created_at) {
-      var iuranTanggal = i.created_at.split('T')[0];
-      if (iuranTanggal !== filterIuran.tanggal) return false;
+    // Filter tanggal spesifik (pakai kolom 'bulan' = tanggal transaksi asli, BUKAN created_at)
+    if (filterIuran.tanggal && i.bulan) {
+      var iuranTanggalAsli = i.bulan.length > 7 ? i.bulan.split('T')[0] : null;
+      if (iuranTanggalAsli !== filterIuran.tanggal) return false;
     }
     
     return true;
@@ -2131,7 +2137,7 @@ function applyFilterIuran() {
     return;
   }
   
-  var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Bulan</th><th>Nominal</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody>';
+  var html = '<div class="table-wrap"><table><thead><tr><th>Anggota</th><th>Tgl Transaksi</th><th>Nominal</th><th>Tgl Diinput</th><th>Aksi</th></tr></thead><tbody>';
   var reversed = filtered.slice().reverse();
   reversed.forEach(function(i) {
     var tgl = i.created_at ? new Date(i.created_at).toLocaleDateString('id-ID') : '-';
@@ -2663,13 +2669,14 @@ function previewLaporan() {
     }
   });
   
-  // 3. Iuran
+  // 3. Iuran (gunakan tanggal TRANSAKSI ASLI dari kolom 'bulan', bukan created_at/waktu input)
   appData.iuran.forEach(function(i) {
-    var date = new Date(i.created_at);
+    var tanggalAsli = (i.bulan && i.bulan.length > 7) ? i.bulan : i.created_at; // fallback utk data lama
+    var date = new Date(tanggalAsli);
     var include = true;
     
     if (filterLaporan.nama && i.anggota !== filterLaporan.nama) include = false;
-    if (filterLaporan.tanggal && i.created_at.split('T')[0] !== filterLaporan.tanggal) include = false;
+    if (filterLaporan.tanggal && tanggalAsli.split('T')[0] !== filterLaporan.tanggal) include = false;
     if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
     if (filterLaporan.bulan && !(i.bulan && i.bulan.startsWith(filterLaporan.bulan))) include = false;
     if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
@@ -2677,7 +2684,7 @@ function previewLaporan() {
     if (include) {
       var iuranPeriodeLabel = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
       allTransaksi.push({
-        tanggal: i.created_at,
+        tanggal: tanggalAsli,
         jenis: 'IURAN',
         keterangan: 'Iuran ' + iuranPeriodeLabel + ' - ' + i.anggota,
         nominal: i.nominal,
@@ -2994,6 +3001,7 @@ function resetAngsuranForm() {
   document.getElementById('angAnggota').value = '';
   document.getElementById('angNominal').value = '';
   document.getElementById('angKe').value = '';
+  document.getElementById('angTanggal').value = new Date().toISOString().split('T')[0];
   document.getElementById('angSisa').value = '';
   document.getElementById('angId').value = '';
 }
@@ -3002,15 +3010,21 @@ async function saveAngsuran() {
   var anggota = document.getElementById('angAnggota').value;
   var nominal = parseInt(document.getElementById('angNominal').value);
   var ke = parseInt(document.getElementById('angKe').value);
+  var tanggalInput = document.getElementById('angTanggal').value;
   var id = document.getElementById('angId').value;
   
   if (!anggota || !nominal || !ke) { alert('Semua field wajib diisi!'); return; }
+  if (!tanggalInput) { alert('Tanggal transaksi wajib diisi!'); return; }
   
   var p = appData.pinjaman.find(function(x) { return x.anggota === anggota && x.sisa > 0; });
   if (!p && !id) { alert('Tidak ada pinjaman aktif!'); return; }
   if (!id && nominal > p.sisa) { alert('Nominal melebihi sisa!'); return; }
   
-  
+  // Gabungkan tanggal transaksi yang diinput manual dengan jam saat ini,
+  // supaya urutan antar transaksi di hari yang sama tetap terjaga,
+  // tapi TANGGALNYA sesuai tanggal transaksi asli (bukan tanggal input/submit).
+  var jamSekarang = new Date().toISOString().split('T')[1];
+  var createdAtValue = tanggalInput + 'T' + jamSekarang;
   
   showLoading(true);
   try {
@@ -3019,7 +3033,7 @@ async function saveAngsuran() {
       var oldData = appData.angsuran.find(function(x) { return x.id === id; });
       var selisih = nominal - (oldData ? oldData.nominal : 0);
       
-      await sbClient.from('angsuran').update({ anggota: anggota, nominal: nominal, ke: ke }).eq('id', id);
+      await sbClient.from('angsuran').update({ anggota: anggota, nominal: nominal, ke: ke, created_at: createdAtValue }).eq('id', id);
       
       // Update pinjaman
       var pinj = appData.pinjaman.find(function(x) { return x.anggota === anggota; });
@@ -3028,11 +3042,11 @@ async function saveAngsuran() {
       }
       
       // Update kas
-      await sbClient.from('kas').update({ nominal: nominal }).eq('keterangan', 'Angsuran ' + anggota + ' ke-' + ke);
+      await sbClient.from('kas').update({ nominal: nominal, tanggal: tanggalInput, created_at: createdAtValue }).eq('keterangan', 'Angsuran ' + anggota + ' ke-' + ke);
     } else {
-      await sbClient.from('angsuran').insert([{ anggota: anggota, nominal: nominal, ke: ke }]);
+      await sbClient.from('angsuran').insert([{ anggota: anggota, nominal: nominal, ke: ke, created_at: createdAtValue }]);
       await sbClient.from('pinjaman').update({ sisa: p.sisa - nominal }).eq('id', p.id);
-      await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke }]);
+      await sbClient.from('kas').insert([{ jenis: 'DEBET', nominal: nominal, keterangan: 'Angsuran ' + anggota + ' ke-' + ke, tanggal: tanggalInput, created_at: createdAtValue }]);
     }
     await loadFromSupabase();
     resetAngsuranForm();
@@ -3280,13 +3294,14 @@ function downloadReport() {
     }
   });
   
-  // 3. Iuran
+  // 3. Iuran (gunakan tanggal TRANSAKSI ASLI dari kolom 'bulan', bukan created_at/waktu input)
   appData.iuran.forEach(function(i) {
-    var date = new Date(i.created_at);
+    var tanggalAsli = (i.bulan && i.bulan.length > 7) ? i.bulan : i.created_at; // fallback utk data lama
+    var date = new Date(tanggalAsli);
     var include = true;
     
     if (filterLaporan.nama && i.anggota !== filterLaporan.nama) include = false;
-    if (filterLaporan.tanggal && i.created_at.split('T')[0] !== filterLaporan.tanggal) include = false;
+    if (filterLaporan.tanggal && tanggalAsli.split('T')[0] !== filterLaporan.tanggal) include = false;
     if (filterLaporan.minggu && getMingguKe(date) != filterLaporan.minggu) include = false;
     if (filterLaporan.bulan && !(i.bulan && i.bulan.startsWith(filterLaporan.bulan))) include = false;
     if (filterLaporan.tahun && date.getFullYear() != filterLaporan.tahun) include = false;
@@ -3294,7 +3309,7 @@ function downloadReport() {
     if (include) {
       var iuranPeriodeLabel = i.bulan ? (i.bulan.length > 7 ? new Date(i.bulan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : i.bulan) : '-';
       allTransaksi.push({
-        tanggal: i.created_at,
+        tanggal: tanggalAsli,
         jenis: 'IURAN',
         keterangan: 'Iuran ' + iuranPeriodeLabel + ' - ' + i.anggota,
         nominal: i.nominal,
