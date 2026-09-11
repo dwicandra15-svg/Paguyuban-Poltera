@@ -1071,6 +1071,9 @@ h3 { margin-top: 0; color: #1f2937; }
       </div>
       
       <h4 style="margin-top: 24px;">Riwayat Transaksi Saldo</h4>
+      <div class="form-group" style="margin-top:4px;">
+        <input type="text" id="searchSaldoKeterangan" placeholder="🔍 Cari nama anggota/keterangan..." oninput="renderSaldo()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+      </div>
       <div id="saldoList" class="mt-4"></div>
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 16px;">Kembali</button>
     </div>
@@ -1082,6 +1085,9 @@ h3 { margin-top: 0; color: #1f2937; }
       <!-- Filter Section -->
       <div class="filter-section">
         <h4 style="margin-top: 0; color: #0369a1; font-size: 14px;">🔍 Filter Laporan</h4>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <input type="text" id="searchLapNama" placeholder="🔍 Ketik nama anggota (pelengkap dropdown di bawah)..." oninput="previewLaporan()" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-top:0;">
+        </div>
         <div class="filter-grid">
           <div class="form-group">
             <label>Nama Anggota</label>
@@ -1155,7 +1161,23 @@ h3 { margin-top: 0; color: #1f2937; }
         <button onclick="saveSettings()" style="flex: 1;">Simpan Pengaturan</button>
         <button class="btn-secondary" onclick="resetSettingsForm()" style="flex: 1;">Reset</button>
       </div>
-      <button onclick="exportData()" class="btn-secondary" style="margin-top: 8px;">💾 Export Data (JSON)</button>
+      
+      <hr style="margin: 24px 0; border: none; border-top: 1px solid #e5e7eb;">
+      
+      <h4>💾 Backup & Restore Data</h4>
+      <div class="alert alert-info" style="margin-bottom: 12px;">
+        Backup rutin sangat dianjurkan, terutama sebelum sesi input data massal/kolektif. Simpan file backup di tempat aman (Google Drive/email) di luar komputer ini.
+      </div>
+      <button onclick="exportData()" class="btn-success">💾 Backup Data Sekarang (Download JSON)</button>
+      
+      <div style="margin-top: 16px;">
+        <input type="file" id="restoreFileInput" accept="application/json,.json" style="display:none;" onchange="handleRestoreFileSelected(this)">
+        <button onclick="document.getElementById('restoreFileInput').click()" class="btn-warning">📥 Restore Data dari File Backup</button>
+        <div style="font-size: 12px; color: #92400e; margin-top: 8px; background: #fef3c7; padding: 10px; border-radius: 8px;">
+          ⚠️ <strong>PERHATIAN:</strong> Restore akan MENGHAPUS SEMUA data yang ada saat ini di database dan menggantinya dengan isi file backup. Sebelum menghapus apapun, sistem akan otomatis mendownload backup data kondisi TERKINI sebagai jaring pengaman. Gunakan fitur ini hanya jika data rusak/hilang dan Anda ingin mengembalikan ke kondisi backup tertentu.
+        </div>
+      </div>
+      
       <button class="btn-secondary" onclick="backToMenu()" style="margin-top: 8px;">Kembali</button>
     </div>
   </div>
@@ -2476,13 +2498,19 @@ function renderSaldo() {
   }
   
   var list = document.getElementById('saldoList');
-  if (!appData.kas.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💳</div><p>Belum ada transaksi saldo</p></div>';
+  var searchText = (document.getElementById('searchSaldoKeterangan') ? document.getElementById('searchSaldoKeterangan').value.toLowerCase() : '');
+  var kasFiltered = appData.kas.filter(function(k) {
+    if (!searchText) return true;
+    return (k.keterangan || '').toLowerCase().includes(searchText);
+  });
+  
+  if (!kasFiltered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💳</div><p>' + (searchText ? 'Tidak ada transaksi yang cocok dengan pencarian' : 'Belum ada transaksi saldo') + '</p></div>';
     return;
   }
   
   var html = '<div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Keterangan</th><th>Jenis</th><th>Nominal</th><th>Aksi</th></tr></thead><tbody>';
-  var reversed = appData.kas.slice().reverse();
+  var reversed = kasFiltered.slice().reverse();
   reversed.forEach(function(k) {
     var jenisBadge = k.jenis === 'DEBET' ? 
       '<span class="badge badge-ok">DEBET</span>' : 
@@ -2725,6 +2753,14 @@ function previewLaporan() {
     return new Date(a.tanggal) - new Date(b.tanggal);
   });
   
+  // Filter tambahan: search bebas nama (pelengkap dropdown)
+  var searchLapText = (document.getElementById('searchLapNama') ? document.getElementById('searchLapNama').value.toLowerCase().trim() : '');
+  if (searchLapText) {
+    allTransaksi = allTransaksi.filter(function(t) {
+      return t.anggota && t.anggota.toLowerCase().includes(searchLapText);
+    });
+  }
+  
   // Render preview
   var container = document.getElementById('laporanPreview');
   
@@ -2770,6 +2806,7 @@ function previewLaporan() {
 }
 
 function resetFilterLaporan() {
+  document.getElementById('searchLapNama').value = '';
   document.getElementById('filterLapNama').value = '';
   document.getElementById('filterLapTanggal').value = '';
   document.getElementById('filterLapMinggu').value = '';
@@ -3155,13 +3192,170 @@ function resetSettingsForm() {
   document.getElementById('logoPreview').style.display = 'none';
 }
 
-function exportData() {
-  var blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+function exportData(silentFilename) {
+  var backupPayload = {
+    _backup_info: {
+      app: 'Paguyuban Poltera',
+      versi_backup: 2,
+      dibuat_pada: new Date().toISOString(),
+      jumlah_anggota: appData.anggota.length,
+      jumlah_pengajuan: appData.pengajuan.length,
+      jumlah_pinjaman: appData.pinjaman.length,
+      jumlah_angsuran: appData.angsuran.length,
+      jumlah_iuran: appData.iuran.length,
+      jumlah_kas: appData.kas.length,
+      jumlah_refund: appData.refund.length
+    },
+    anggota: appData.anggota,
+    pengajuan: appData.pengajuan,
+    pinjaman: appData.pinjaman,
+    angsuran: appData.angsuran,
+    iuran: appData.iuran,
+    kas: appData.kas,
+    refund: appData.refund,
+    settings: appData.settings
+  };
+  
+  var blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = 'backup_paguyuban_' + new Date().toISOString().split('T')[0] + '.json';
+  a.download = silentFilename || ('backup_paguyuban_' + new Date().toISOString().split('T')[0] + '_' + Date.now() + '.json');
   a.click();
+  return backupPayload;
+}
+
+// ==========================================
+// RESTORE DATA DARI FILE BACKUP
+// ==========================================
+function handleRestoreFileSelected(input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var parsed;
+    try {
+      parsed = JSON.parse(e.target.result);
+    } catch (err) {
+      alert('File bukan JSON yang valid, atau rusak. Pastikan Anda memilih file hasil Backup dari aplikasi ini.');
+      input.value = '';
+      return;
+    }
+    
+    // Validasi struktur dasar
+    var tabelWajib = ['anggota', 'pengajuan', 'pinjaman', 'angsuran', 'iuran', 'kas'];
+    var strukturValid = tabelWajib.every(function(t) { return Array.isArray(parsed[t]); });
+    
+    if (!strukturValid) {
+      alert('File ini tidak memiliki struktur data Paguyuban yang dikenali. Restore dibatalkan.');
+      input.value = '';
+      return;
+    }
+    
+    var info = parsed._backup_info;
+    var infoText = info ?
+      ('Backup dibuat pada: ' + new Date(info.dibuat_pada).toLocaleString('id-ID') + '\n' +
+       'Isi backup: ' + (parsed.anggota||[]).length + ' anggota, ' + (parsed.iuran||[]).length + ' iuran, ' +
+       (parsed.angsuran||[]).length + ' angsuran, ' + (parsed.pinjaman||[]).length + ' pinjaman, ' +
+       (parsed.kas||[]).length + ' transaksi kas') :
+      'File backup ini tidak memiliki info tanggal pembuatan (kemungkinan format lama).';
+    
+    var konfirmasi1 = confirm(
+      '⚠️ PERINGATAN RESTORE DATA ⚠️\n\n' +
+      infoText + '\n\n' +
+      'Melanjutkan proses ini akan MENGHAPUS SEMUA DATA yang ada saat ini di database, ' +
+      'dan menggantinya dengan isi file backup di atas.\n\n' +
+      'Sebelum menghapus, sistem akan otomatis mendownload backup data KONDISI SAAT INI ' +
+      'sebagai jaring pengaman (file terpisah).\n\n' +
+      'Apakah Anda yakin ingin melanjutkan?'
+    );
+    
+    if (!konfirmasi1) { input.value = ''; return; }
+    
+    var konfirmasi2 = prompt('Untuk konfirmasi akhir, ketik RESTORE (huruf besar semua) lalu tekan OK:');
+    if (konfirmasi2 !== 'RESTORE') {
+      alert('Restore dibatalkan karena konfirmasi tidak sesuai.');
+      input.value = '';
+      return;
+    }
+    
+    jalankanRestore(parsed);
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+async function jalankanRestore(backupData) {
+  showLoading(true);
+  try {
+    // 1. Safety net: download dulu kondisi data SAAT INI sebelum dihapus
+    exportData('SAFETY_BACKUP_sebelum_restore_' + Date.now() + '.json');
+    
+    // Beri jeda sedikit supaya browser sempat proses download sebelum lanjut
+    await new Promise(function(resolve) { setTimeout(resolve, 800); });
+    
+    var tabelUntukDihapus = ['angsuran', 'refund', 'pinjaman', 'pengajuan', 'iuran', 'kas', 'anggota'];
+    
+    // 2. Hapus semua data lama di setiap tabel
+    for (var i = 0; i < tabelUntukDihapus.length; i++) {
+      var namaTabel = tabelUntukDihapus[i];
+      var hasilHapus = await sbClient.from(namaTabel).delete().gt('created_at', '1900-01-01');
+      if (hasilHapus.error) {
+        throw new Error('Gagal menghapus data lama di tabel "' + namaTabel + '": ' + hasilHapus.error.message);
+      }
+    }
+    
+    // 3. Masukkan kembali data dari backup, per tabel, per batch (maks 200 baris per batch)
+    var tabelUntukDiisi = ['anggota', 'pengajuan', 'pinjaman', 'angsuran', 'iuran', 'kas', 'refund'];
+    var ringkasanRestore = [];
+    
+    for (var j = 0; j < tabelUntukDiisi.length; j++) {
+      var tabel = tabelUntukDiisi[j];
+      var rows = backupData[tabel] || [];
+      var jumlahDimasukkan = 0;
+      
+      for (var k = 0; k < rows.length; k += 200) {
+        var batch = rows.slice(k, k + 200);
+        if (batch.length === 0) continue;
+        var hasilInsert = await sbClient.from(tabel).insert(batch);
+        if (hasilInsert.error) {
+          throw new Error('Gagal restore data ke tabel "' + tabel + '" (batch mulai baris ' + k + '): ' + hasilInsert.error.message);
+        }
+        jumlahDimasukkan += batch.length;
+      }
+      ringkasanRestore.push(tabel + ': ' + jumlahDimasukkan + ' baris');
+    }
+    
+    // 4. Restore settings (upsert, bukan insert biasa)
+    if (backupData.settings) {
+      await sbClient.from('setting').update({ value: backupData.settings }).eq('key', 'app');
+      var checkSetting = await sbClient.from('setting').select('*').eq('key', 'app').single();
+      if (!checkSetting.data) {
+        await sbClient.from('setting').insert([{ key: 'app', value: backupData.settings }]);
+      }
+      appData.settings = backupData.settings;
+      localStorage.setItem('paguyuban_settings', JSON.stringify(appData.settings));
+    }
+    
+    // 5. Reload semua data dari Supabase supaya tampilan sinkron
+    await loadFromSupabase();
+    updateDashboard();
+    updateHeaderSettings();
+    
+    showLoading(false);
+    alert('✅ RESTORE BERHASIL!\n\nRingkasan data yang dipulihkan:\n' + ringkasanRestore.join('\n') + 
+          '\n\nBackup kondisi sebelumnya sudah otomatis terdownload sebagai jaring pengaman.');
+    
+    backToMenu();
+    
+  } catch (err) {
+    showLoading(false);
+    alert('❌ RESTORE GAGAL DI TENGAH PROSES!\n\n' + err.message + 
+          '\n\nPENTING: Database kemungkinan dalam kondisi TIDAK LENGKAP sekarang (sebagian data mungkin sudah terhapus/masuk). ' +
+          'Gunakan file "SAFETY_BACKUP_sebelum_restore..." yang otomatis terdownload tadi untuk mencoba restore ulang, ' +
+          'atau hubungi admin/developer untuk bantuan lebih lanjut.');
+  }
 }
 
 // ==========================================
@@ -3266,7 +3460,8 @@ function downloadReport() {
         jenis: 'ANGSURAN',
         keterangan: 'Angsuran ke-' + a.ke + ' - ' + a.anggota,
         nominal: a.nominal,
-        tipe: 'DEBET'
+        tipe: 'DEBET',
+        anggota: a.anggota
       });
     }
   });
@@ -3289,7 +3484,8 @@ function downloadReport() {
         jenis: 'PENCAIRAN',
         keterangan: 'Pencairan Pinjaman - ' + p.anggota,
         nominal: p.nominal,
-        tipe: 'KREDIT'
+        tipe: 'KREDIT',
+        anggota: p.anggota
       });
     }
   });
@@ -3313,7 +3509,8 @@ function downloadReport() {
         jenis: 'IURAN',
         keterangan: 'Iuran ' + iuranPeriodeLabel + ' - ' + i.anggota,
         nominal: i.nominal,
-        tipe: 'DEBET'
+        tipe: 'DEBET',
+        anggota: i.anggota
       });
     }
   });
@@ -3338,7 +3535,8 @@ function downloadReport() {
         jenis: 'PENGEMBALIAN',
         keterangan: 'Pengembalian Iuran - ' + r.anggota,
         nominal: r.nominal,
-        tipe: 'KREDIT'
+        tipe: 'KREDIT',
+        anggota: r.anggota
       });
     }
   });
@@ -3347,6 +3545,14 @@ function downloadReport() {
   allTransaksi.sort(function(a, b) {
     return new Date(a.tanggal) - new Date(b.tanggal);
   });
+  
+  // Filter tambahan: search bebas nama (pelengkap dropdown)
+  var searchLapTextPdf = (document.getElementById('searchLapNama') ? document.getElementById('searchLapNama').value.toLowerCase().trim() : '');
+  if (searchLapTextPdf) {
+    allTransaksi = allTransaksi.filter(function(t) {
+      return t.anggota && t.anggota.toLowerCase().includes(searchLapTextPdf);
+    });
+  }
   
   // Isi transaksi
   yPos += 6;
