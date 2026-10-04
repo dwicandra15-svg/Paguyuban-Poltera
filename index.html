@@ -8,7 +8,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f0f2f5; line-height: 1.5; }
 header { background: #2563eb; color: #fff; padding: 16px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-header img { width: 48px; height: 48px; border-radius: 8px; background: #fff; object-fit: cover; }
+header img { width: 48px; height: 48px; border-radius: 8px; background: #fff; object-fit: contain; padding: 3px; box-sizing: border-box; }
 .container { max-width: 800px; margin: 0 auto; padding: 16px; }
 .card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .menu-item { display: flex; gap: 12px; align-items: center; padding: 14px; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s; }
@@ -3344,15 +3344,56 @@ function resetFilterLaporan() {
 // ==========================================
 // LOGO PREVIEW
 // ==========================================
+// Logo diperkecil & dikompres otomatis sebelum disimpan. Firestore membatasi
+// 1 dokumen maksimal ~1 MB; foto logo asli dari HP/kamera bisa beberapa MB,
+// sehingga kalau disimpan mentah-mentah penyimpanan ke database GAGAL DIAM-DIAM
+// (hanya tersimpan lokal di browser itu saja, tidak muncul di perangkat/akun lain).
+// Mengecilkan ke maksimal 300x300px & kompres JPEG menjaga ukurannya kecil (biasanya < 50 KB).
+var LOGO_MAX_DIMENSION = 300;
+var LOGO_JPEG_QUALITY = 0.85;
+
 function previewLogo(input) {
   if (input.files && input.files[0]) {
     var reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById('logoPreview').src = e.target.result;
-      document.getElementById('logoPreview').style.display = 'block';
+      resizeLogoImage(e.target.result, function(resizedDataUrl) {
+        document.getElementById('logoPreview').src = resizedDataUrl;
+        document.getElementById('logoPreview').style.display = 'block';
+      });
     };
     reader.readAsDataURL(input.files[0]);
   }
+}
+
+function resizeLogoImage(dataUrl, callback) {
+  var img = new Image();
+  img.onload = function() {
+    var w = img.width, h = img.height;
+    if (w > h) {
+      if (w > LOGO_MAX_DIMENSION) { h = Math.round(h * (LOGO_MAX_DIMENSION / w)); w = LOGO_MAX_DIMENSION; }
+    } else {
+      if (h > LOGO_MAX_DIMENSION) { w = Math.round(w * (LOGO_MAX_DIMENSION / h)); h = LOGO_MAX_DIMENSION; }
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    // Latar putih dulu supaya logo PNG transparan tidak jadi hitam saat dikonversi ke JPEG
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    try {
+      callback(canvas.toDataURL('image/jpeg', LOGO_JPEG_QUALITY));
+    } catch (e) {
+      console.error('Gagal kompres logo, pakai gambar asli:', e);
+      callback(dataUrl);
+    }
+  };
+  img.onerror = function() {
+    console.error('Gagal memuat gambar logo untuk resize, pakai data asli.');
+    callback(dataUrl);
+  };
+  img.src = dataUrl;
 }
 
 // ==========================================
@@ -3701,11 +3742,10 @@ async function saveSettings() {
     }
     
     await loadFromSupabase();
-    alert('Pengaturan disimpan!');
+    alert('Pengaturan disimpan! Perubahan (termasuk logo) akan terlihat di semua perangkat/akun.');
   } catch (e) {
     console.error('Save settings error:', e);
-    // Tetap tampilkan sukses karena sudah disimpan di localStorage
-    alert('Pengaturan disimpan (mode lokal)!');
+    alert('⚠️ Pengaturan GAGAL tersimpan ke database (' + (e && e.message ? e.message : 'koneksi bermasalah') + ').\n\nPerubahan hanya tersimpan sementara di browser ini saja dan TIDAK akan terlihat di perangkat/akun lain. Cek koneksi internet lalu coba simpan lagi.');
   }
   showLoading(false);
 }
