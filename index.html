@@ -159,6 +159,45 @@ tbody tr:hover { background: #f9fafb; }
 
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+.password-field-wrap { position: relative; }
+.password-field-wrap input { padding-right: 42px !important; width: 100%; box-sizing: border-box; }
+.password-toggle-eye {
+  position: absolute !important;
+  right: 6px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: auto !important;
+  height: auto !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px !important;
+  margin: 0 !important;
+  color: #6b7280;
+  user-select: none;
+}
+.password-toggle-eye:hover { color: #374151; }
+
+/* Tombol back berupa ikon di bagian atas setiap halaman fitur */
+.page-back-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  margin: 0 0 12px 0 !important;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 18px;
+  cursor: pointer;
+}
+.page-back-icon-btn:hover { background: #f3f4f6; }
 
 h3 { margin-top: 0; color: #1f2937; }
 .mt-4 { margin-top: 16px; }
@@ -499,7 +538,10 @@ h3 { margin-top: 0; color: #1f2937; }
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" id="password" placeholder="••••••••">
+      <div class="password-field-wrap">
+        <input type="password" id="password" placeholder="••••••••">
+        <button type="button" class="password-toggle-eye" onclick="togglePasswordVisibility('password', this)" title="Tampilkan/sembunyikan password">👁️</button>
+      </div>
     </div>
     <button onclick="doLogin()">Login</button>
     
@@ -522,11 +564,17 @@ h3 { margin-top: 0; color: #1f2937; }
       <h4 style="margin-top:0;">🔐 Buat Password Baru</h4>
       <div class="form-group">
         <label>Password Baru</label>
-        <input type="password" id="newPasswordInput" placeholder="Minimal 6 karakter">
+        <div class="password-field-wrap">
+          <input type="password" id="newPasswordInput" placeholder="Minimal 6 karakter">
+          <button type="button" class="password-toggle-eye" onclick="togglePasswordVisibility('newPasswordInput', this)" title="Tampilkan/sembunyikan password">👁️</button>
+        </div>
       </div>
       <div class="form-group">
         <label>Ulangi Password Baru</label>
-        <input type="password" id="confirmPasswordInput" placeholder="Ulangi password baru">
+        <div class="password-field-wrap">
+          <input type="password" id="confirmPasswordInput" placeholder="Ulangi password baru">
+          <button type="button" class="password-toggle-eye" onclick="togglePasswordVisibility('confirmPasswordInput', this)" title="Tampilkan/sembunyikan password">👁️</button>
+        </div>
       </div>
       <button onclick="submitNewPassword()">Simpan Password Baru</button>
     </div>
@@ -615,6 +663,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- DASHBOARD -->
     <div id="dashboard" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>📊 Dashboard</h3>
       <div class="dashboard-grid">
         <div class="dashboard-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -660,6 +709,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- ANGGOTA -->
     <div id="anggota" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>👥 Data Anggota</h3>
       
       <!-- Statistik Anggota -->
@@ -739,6 +789,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- PENGAJUAN -->
     <div id="pengajuan" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>📝 Pengajuan Pinjaman</h3>
       <div class="form-group">
         <label>Nama Anggota</label>
@@ -781,6 +832,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- PENCAIRAN -->
     <div id="pencairan" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>💰 Pencairan Pinjaman</h3>
       
       <!-- Filter Section -->
@@ -816,6 +868,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- ANGSURAN -->
     <div id="angsuran" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>💵 Pembayaran Angsuran</h3>
       
       <!-- Filter Section -->
@@ -897,6 +950,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- IURAN -->
     <div id="iuran" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>🔄 Iuran Rutin</h3>
       
       <!-- Filter Section -->
@@ -953,6 +1007,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- PENGEMBALIAN IURAN -->
     <div id="pengembalian" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>💸 Pengembalian Iuran (Anggota Keluar)</h3>
       
       <div class="refund-card">
@@ -1059,6 +1114,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- SALDO MANAJEMEN -->
     <div id="saldo" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>💳 Manajemen Saldo</h3>
       
       <!-- Summary Box -->
@@ -1120,6 +1176,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- LAPORAN -->
     <div id="laporan" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>📄 Laporan Rekening Koran</h3>
       
       <!-- Filter Section -->
@@ -1179,6 +1236,7 @@ h3 { margin-top: 0; color: #1f2937; }
     
     <!-- PENGATURAN -->
     <div id="pengaturan" class="card hidden">
+      <button class="page-back-icon-btn" onclick="backToMenu()" title="Kembali ke menu">←</button>
       <h3>⚙️ Pengaturan</h3>
       <div class="form-group">
         <label>Nama Aplikasi</label>
@@ -1255,6 +1313,21 @@ h3 { margin-top: 0; color: #1f2937; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
+// ==========================================
+// TAMPILKAN / SEMBUNYIKAN PASSWORD (ikon mata)
+// ==========================================
+function togglePasswordVisibility(inputId, btnEl) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btnEl.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btnEl.textContent = '👁️';
+  }
+}
+
 // ==========================================
 // AKSES localStorage YANG AMAN
 // ==========================================
